@@ -896,7 +896,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+156"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+159"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Proyecto TraceView (*.tvproj)</translation>
     </message>
@@ -1093,8 +1093,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+21"/>
-        <location line="+72"/>
-        <location line="+108"/>
+        <location line="+73"/>
+        <location line="+107"/>
         <source>Downloaded installer not found: %1</source>
         <translation>No se encontró el instalador descargado: %1</translation>
     </message>
@@ -1110,12 +1110,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>No se pudo compartir el APK descargado con el instalador de paquetes.</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+64"/>
         <source>Couldn&apos;t write the update script.</source>
         <translation>No se pudo escribir el script de actualización.</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+24"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>La instalación automática requiere ejecutar un AppImage. Descargue el AppImage desde la página de la versión.</translation>
     </message>
@@ -2434,6 +2434,125 @@ Permitidos: %1</translation>
     </message>
 </context>
 <context>
+    <name>traceview::CrashReportDialog</name>
+    <message>
+        <location filename="../lib/crash/crashreportdialog.cpp" line="+39"/>
+        <source>TraceView closed unexpectedly</source>
+        <translation>TraceView se cerró inesperadamente</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Report a bug</source>
+        <translation>Informar de un error</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This report helps find the problem. Nothing is sent without you.</source>
+        <translation>Este informe ayuda a encontrar el problema. Nada se envía sin tu permiso.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Describe the problem. Nothing is sent without you.</source>
+        <translation>Describe el problema. Nada se envía sin tu permiso.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Version</source>
+        <translation>Versión</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>System</source>
+        <translation>Sistema</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>When</source>
+        <translation>Cuándo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>unknown</source>
+        <translation>desconocido</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>This happened right after updating from v%1.</source>
+        <translation>Esto ocurrió justo después de actualizar desde la v%1.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>What were you doing?</source>
+        <translation>¿Qué estabas haciendo?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I connected the robot over BLE and opened a workspace</source>
+        <translation>Conecté el robot por BLE y abrí un espacio de trabajo</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Technical details</source>
+        <translation>Detalles técnicos</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Stack trace</source>
+        <translation>Traza de la pila</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Log (last %1 lines)</source>
+        <translation>Registro (últimas %1 líneas)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Copy report</source>
+        <translation>Copiar informe</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Save…</source>
+        <translation>Guardar…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Save report in folder</source>
+        <translation>Guardar informe en la carpeta</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+3"/>
+        <source>Save report</source>
+        <translation>Guardar informe</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>The report could not be saved: %1</source>
+        <translation>No se pudo guardar el informe: %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Report saved in %1</source>
+        <translation>Informe guardado en %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Don&apos;t send</source>
+        <translation>No enviar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open issue</source>
+        <translation>Abrir incidencia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copies the report and opens the issue page — paste it there.</source>
+        <translation>Copia el informe y abre la página de incidencias; pégalo allí.</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DashboardCell</name>
     <message>
         <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+514"/>
@@ -2795,7 +2914,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+685"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+688"/>
         <source>Bring to Front</source>
         <translation>Traer al frente</translation>
     </message>
@@ -3589,7 +3708,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+240"/>
+        <location filename="../lib/core/homepage.cpp" line="+228"/>
         <source>The deep scan found nothing new.</source>
         <translation>El escaneo profundo no encontró nada nuevo.</translation>
     </message>
@@ -3602,7 +3721,7 @@ Permitidos: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+207"/>
+        <location line="+213"/>
         <source>Welcome to TraceView</source>
         <translation>Bienvenido a TraceView</translation>
     </message>
@@ -3688,7 +3807,7 @@ Permitidos: %1</translation>
         <translation>Proyecto sin título</translation>
     </message>
     <message numerus="yes">
-        <location line="+1"/>
+        <location line="+2"/>
         <source>%n device(s)</source>
         <translation>
             <numerusform>%n dispositivo</numerusform>
@@ -3696,7 +3815,7 @@ Permitidos: %1</translation>
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+13"/>
+        <location line="+16"/>
         <source>%n widget(s)</source>
         <translation>
             <numerusform>%n widget</numerusform>
@@ -3704,7 +3823,7 @@ Permitidos: %1</translation>
         </translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+55"/>
         <source>No recent projects yet.</source>
         <translation>Aún no hay proyectos recientes.</translation>
     </message>
@@ -3714,7 +3833,7 @@ Permitidos: %1</translation>
         <translation>%1 (se abre al iniciar)</translation>
     </message>
     <message>
-        <location line="+122"/>
+        <location line="+121"/>
         <source>Connected</source>
         <translation>Conectado</translation>
     </message>
@@ -4085,7 +4204,7 @@ Permitidos: %1</translation>
 <context>
     <name>traceview::MainWindow</name>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="+388"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+389"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Este dispositivo transporta %n dispositivo más (%1). Elimínelo o rediríjalo primero.</numerusform>
@@ -4098,7 +4217,7 @@ Permitidos: %1</translation>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+381"/>
+        <location line="+373"/>
         <source>AI assistant access is off.</source>
         <translation>El acceso de asistentes de IA está desactivado.</translation>
     </message>
@@ -4268,12 +4387,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4575"/>
+        <location line="+4598"/>
         <source>Later</source>
         <translation>Más tarde</translation>
     </message>
     <message>
-        <location line="-4568"/>
+        <location line="-4591"/>
         <source>&amp;Access</source>
         <translation>&amp;Acceso</translation>
     </message>
@@ -4294,7 +4413,28 @@ Pérdidas: %2</translation>
         <translation>&amp;Depuración</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+6"/>
+        <location line="+3"/>
+        <source>Force Crash</source>
+        <translation>Forzar fallo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceView will crash right now, without saving. The crash report opens the next time you start it.</source>
+        <translation>TraceView se bloqueará ahora, sin guardar. El informe de fallo se abre la próxima vez que lo inicies.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Crash Now</source>
+        <translation>Fallar ahora</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Keyboard Diagnostics</source>
         <translation>Diagnóstico del teclado</translation>
     </message>
@@ -4314,12 +4454,17 @@ Pérdidas: %2</translation>
         <translation>Do&amp;nar</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+4"/>
+        <source>Report a &amp;Bug</source>
+        <translation>Informar de un &amp;error</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>More options</source>
         <translation>Más opciones</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Connected as: %1</source>
         <translation>Conectado como: %1</translation>
     </message>
@@ -4349,7 +4494,7 @@ Pérdidas: %2</translation>
         <translation>&amp;Entrar en Modo Desarrollador...</translation>
     </message>
     <message>
-        <location line="+196"/>
+        <location line="+198"/>
         <source>Add</source>
         <translation>Añadir</translation>
     </message>
@@ -4400,18 +4545,18 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3820"/>
+        <location line="+3813"/>
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location line="-3818"/>
-        <location line="+3818"/>
+        <location line="-3811"/>
+        <location line="+3811"/>
         <source>Redo</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location line="-3775"/>
+        <location line="-3768"/>
         <source>Add Device</source>
         <translation>Añadir Dispositivo</translation>
     </message>
@@ -4457,12 +4602,12 @@ Pérdidas: %2</translation>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3741"/>
+        <location line="+3734"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Panel en pantalla completa (F11)</translation>
     </message>
     <message>
-        <location line="-3652"/>
+        <location line="-3645"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>Inicio</translation>
@@ -4657,7 +4802,7 @@ Pérdidas: %2</translation>
         <translation>Dashboard de ejemplo</translation>
     </message>
     <message>
-        <location line="+77"/>
+        <location line="+70"/>
         <source>Dongle</source>
         <translation>Dongle</translation>
     </message>
@@ -4705,13 +4850,13 @@ Pérdidas: %2</translation>
         <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+36"/>
+        <location line="+40"/>
         <location line="+37"/>
         <source>Update</source>
         <translation>Actualizar</translation>
     </message>
     <message>
-        <location line="-89"/>
+        <location line="-93"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>La instalación automática requiere ejecutar un AppImage. Descargue el AppImage desde la página de la versión.</translation>
     </message>
@@ -4737,7 +4882,7 @@ Pérdidas: %2</translation>
         <translation>Confirma la instalación en el instalador de Android.</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+22"/>
         <source>Close TraceView</source>
         <translation>Cerrar TraceView</translation>
     </message>
@@ -4756,13 +4901,13 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Cerrar app</translation>
     </message>
     <message>
-        <location line="-3837"/>
-        <location line="+3522"/>
+        <location line="-3834"/>
+        <location line="+3515"/>
         <source>Devices</source>
         <translation>Dispositivos</translation>
     </message>
     <message>
-        <location line="-3447"/>
+        <location line="-3440"/>
         <source>Subscriptions</source>
         <translation>Suscripciones</translation>
     </message>
@@ -4778,12 +4923,12 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <translation>Nombre:</translation>
     </message>
     <message>
-        <location line="-2235"/>
+        <location line="-2253"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2236"/>
+        <location line="+2254"/>
         <source>Workspace</source>
         <translation>Espacio de Trabajo</translation>
     </message>
@@ -4809,23 +4954,23 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3020"/>
+        <location line="+3013"/>
         <source>Add widget</source>
         <translation>Añadir widget</translation>
     </message>
     <message>
-        <location line="-3017"/>
+        <location line="-3010"/>
         <source>Remove selected widget (%1)</source>
         <translation>Eliminar widget seleccionado (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3022"/>
+        <location line="+3015"/>
         <source>Add device</source>
         <translation>Añadir dispositivo</translation>
     </message>
     <message>
-        <location line="-3019"/>
+        <location line="-3012"/>
         <source>Remove selected device (%1)</source>
         <translation>Eliminar dispositivo seleccionado (%1)</translation>
     </message>
@@ -5023,7 +5168,7 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
     </message>
     <message>
         <location line="+15"/>
-        <location line="+618"/>
+        <location line="+611"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Abrir proyecto</translation>
@@ -7380,6 +7525,19 @@ Elige Más tarde para seguir trabajando -- los cambios se aplicarán la próxima
         <location line="+1"/>
         <source>Command</source>
         <translation>Comando</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SplashScreen</name>
+    <message>
+        <location filename="../lib/crash/splashscreen.cpp" line="+52"/>
+        <source>Updated from v%1 to v%2</source>
+        <translation>Actualizado de la v%1 a la v%2</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Loading…</source>
+        <translation>Cargando…</translation>
     </message>
 </context>
 <context>

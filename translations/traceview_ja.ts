@@ -896,7 +896,7 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+156"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+159"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView プロジェクト (*.tvproj)</translation>
     </message>
@@ -1093,8 +1093,8 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
     </message>
     <message>
         <location line="+21"/>
-        <location line="+72"/>
-        <location line="+108"/>
+        <location line="+73"/>
+        <location line="+107"/>
         <source>Downloaded installer not found: %1</source>
         <translation>ダウンロードしたインストーラーが見つかりません: %1</translation>
     </message>
@@ -1110,12 +1110,12 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>ダウンロードした APK をパッケージインストーラーに渡せませんでした。</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+64"/>
         <source>Couldn&apos;t write the update script.</source>
         <translation>アップデートスクリプトを書き込めませんでした。</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+24"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>自動インストールには AppImage での実行が必要です。リリースページから AppImage をダウンロードしてください。</translation>
     </message>
@@ -2433,6 +2433,125 @@ Allowed: %1</source>
     </message>
 </context>
 <context>
+    <name>traceview::CrashReportDialog</name>
+    <message>
+        <location filename="../lib/crash/crashreportdialog.cpp" line="+39"/>
+        <source>TraceView closed unexpectedly</source>
+        <translation>TraceView が予期せず終了しました</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Report a bug</source>
+        <translation>バグを報告</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This report helps find the problem. Nothing is sent without you.</source>
+        <translation>このレポートは問題の特定に役立ちます。あなたの許可なく送信されることはありません。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Describe the problem. Nothing is sent without you.</source>
+        <translation>問題を説明してください。あなたの許可なく送信されることはありません。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Version</source>
+        <translation>バージョン</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>System</source>
+        <translation>システム</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>When</source>
+        <translation>発生日時</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>unknown</source>
+        <translation>不明</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>This happened right after updating from v%1.</source>
+        <translation>v%1 からアップデートした直後に発生しました。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>What were you doing?</source>
+        <translation>何をしていましたか？</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I connected the robot over BLE and opened a workspace</source>
+        <translation>BLE でロボットに接続し、ワークスペースを開きました</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Technical details</source>
+        <translation>技術的な詳細</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Stack trace</source>
+        <translation>スタックトレース</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Log (last %1 lines)</source>
+        <translation>ログ（直近 %1 行）</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Copy report</source>
+        <translation>レポートをコピー</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Save…</source>
+        <translation>保存…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Save report in folder</source>
+        <translation>フォルダにレポートを保存</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+3"/>
+        <source>Save report</source>
+        <translation>レポートを保存</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>The report could not be saved: %1</source>
+        <translation>レポートを保存できませんでした: %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Report saved in %1</source>
+        <translation>レポートを %1 に保存しました</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Don&apos;t send</source>
+        <translation>送信しない</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open issue</source>
+        <translation>Issue を開く</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copies the report and opens the issue page — paste it there.</source>
+        <translation>レポートをコピーし、Issue ページを開きます。そこに貼り付けてください。</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DashboardCell</name>
     <message>
         <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+514"/>
@@ -2794,7 +2913,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+685"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+688"/>
         <source>Bring to Front</source>
         <translation>最前面へ移動</translation>
     </message>
@@ -3588,7 +3707,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+240"/>
+        <location filename="../lib/core/homepage.cpp" line="+228"/>
         <source>The deep scan found nothing new.</source>
         <translation>詳細スキャンで新しいものは見つかりませんでした。</translation>
     </message>
@@ -3600,7 +3719,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message>
-        <location line="+207"/>
+        <location line="+213"/>
         <source>Welcome to TraceView</source>
         <translation>TraceView へようこそ</translation>
     </message>
@@ -3686,21 +3805,21 @@ Allowed: %1</source>
         <translation>無題のプロジェクト</translation>
     </message>
     <message numerus="yes">
-        <location line="+1"/>
+        <location line="+2"/>
         <source>%n device(s)</source>
         <translation>
             <numerusform>%n 台のデバイス</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+13"/>
+        <location line="+16"/>
         <source>%n widget(s)</source>
         <translation>
             <numerusform>%n 個のウィジェット</numerusform>
         </translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+55"/>
         <source>No recent projects yet.</source>
         <translation>最近のプロジェクトはまだありません。</translation>
     </message>
@@ -3710,7 +3829,7 @@ Allowed: %1</source>
         <translation>%1（起動時に開く）</translation>
     </message>
     <message>
-        <location line="+122"/>
+        <location line="+121"/>
         <source>Connected</source>
         <translation>接続済み</translation>
     </message>
@@ -4081,7 +4200,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::MainWindow</name>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="+388"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+389"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>このデバイスは他に %n 台のデバイス (%1) を中継しています。先に削除するか、参照先を変更してください。</numerusform>
@@ -4093,7 +4212,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+381"/>
+        <location line="+373"/>
         <source>AI assistant access is off.</source>
         <translation>AI アシスタントのアクセスはオフです。</translation>
     </message>
@@ -4263,12 +4382,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4575"/>
+        <location line="+4598"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-4568"/>
+        <location line="-4591"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -4289,7 +4408,28 @@ Drops: %2</source>
         <translation>デバッグ(&amp;D)</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+6"/>
+        <location line="+3"/>
+        <source>Force Crash</source>
+        <translation>強制クラッシュ</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceView will crash right now, without saving. The crash report opens the next time you start it.</source>
+        <translation>TraceView は保存せずに今すぐクラッシュします。クラッシュレポートは次回起動時に開きます。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Crash Now</source>
+        <translation>今すぐクラッシュ</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Keyboard Diagnostics</source>
         <translation>キーボード診断</translation>
     </message>
@@ -4309,12 +4449,17 @@ Drops: %2</source>
         <translation>寄付(&amp;K)</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+4"/>
+        <source>Report a &amp;Bug</source>
+        <translation>バグを報告(&amp;B)</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>More options</source>
         <translation>その他のオプション</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Connected as: %1</source>
         <translation>接続ユーザー: %1</translation>
     </message>
@@ -4344,7 +4489,7 @@ Drops: %2</source>
         <translation>開発者モードに入る(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+196"/>
+        <location line="+198"/>
         <source>Add</source>
         <translation>追加</translation>
     </message>
@@ -4395,18 +4540,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3820"/>
+        <location line="+3813"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3818"/>
-        <location line="+3818"/>
+        <location line="-3811"/>
+        <location line="+3811"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3775"/>
+        <location line="-3768"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -4452,12 +4597,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3741"/>
+        <location line="+3734"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-3652"/>
+        <location line="-3645"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>ホーム</translation>
@@ -4652,7 +4797,7 @@ Drops: %2</source>
         <translation>サンプルダッシュボード</translation>
     </message>
     <message>
-        <location line="+77"/>
+        <location line="+70"/>
         <source>Dongle</source>
         <translation>ドングル</translation>
     </message>
@@ -4700,13 +4845,13 @@ Drops: %2</source>
         <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+36"/>
+        <location line="+40"/>
         <location line="+37"/>
         <source>Update</source>
         <translation>アップデート</translation>
     </message>
     <message>
-        <location line="-89"/>
+        <location line="-93"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>自動インストールには AppImage での実行が必要です。リリースページから AppImage をダウンロードしてください。</translation>
     </message>
@@ -4732,7 +4877,7 @@ Drops: %2</source>
         <translation>Android インストーラーでインストールを確認してください。</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+22"/>
         <source>Close TraceView</source>
         <translation>TraceView を閉じる</translation>
     </message>
@@ -4751,13 +4896,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3837"/>
-        <location line="+3522"/>
+        <location line="-3834"/>
+        <location line="+3515"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-3447"/>
+        <location line="-3440"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -4773,12 +4918,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名前:</translation>
     </message>
     <message>
-        <location line="-2235"/>
+        <location line="-2253"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2236"/>
+        <location line="+2254"/>
         <source>Workspace</source>
         <translation>ワークスペース</translation>
     </message>
@@ -4804,23 +4949,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3020"/>
+        <location line="+3013"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-3017"/>
+        <location line="-3010"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3022"/>
+        <location line="+3015"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-3019"/>
+        <location line="-3012"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -5018,7 +5163,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+618"/>
+        <location line="+611"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
@@ -7371,6 +7516,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Command</source>
         <translation>コマンド</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SplashScreen</name>
+    <message>
+        <location filename="../lib/crash/splashscreen.cpp" line="+52"/>
+        <source>Updated from v%1 to v%2</source>
+        <translation>v%1 から v%2 にアップデート</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Loading…</source>
+        <translation>読み込み中…</translation>
     </message>
 </context>
 <context>

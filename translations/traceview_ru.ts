@@ -896,7 +896,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+156"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+159"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>Проект TraceView (*.tvproj)</translation>
     </message>
@@ -1093,8 +1093,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+21"/>
-        <location line="+72"/>
-        <location line="+108"/>
+        <location line="+73"/>
+        <location line="+107"/>
         <source>Downloaded installer not found: %1</source>
         <translation>Загруженный установщик не найден: %1</translation>
     </message>
@@ -1110,12 +1110,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Не удалось передать загруженный APK установщику пакетов.</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+64"/>
         <source>Couldn&apos;t write the update script.</source>
         <translation>Не удалось записать скрипт обновления.</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+24"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>Для автоматической установки нужно запускать AppImage. Скачайте AppImage со страницы релиза.</translation>
     </message>
@@ -2435,6 +2435,125 @@ Allowed: %1</source>
     </message>
 </context>
 <context>
+    <name>traceview::CrashReportDialog</name>
+    <message>
+        <location filename="../lib/crash/crashreportdialog.cpp" line="+39"/>
+        <source>TraceView closed unexpectedly</source>
+        <translation>TraceView неожиданно закрылся</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Report a bug</source>
+        <translation>Сообщить об ошибке</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This report helps find the problem. Nothing is sent without you.</source>
+        <translation>Этот отчёт помогает найти проблему. Без вашего согласия ничего не отправляется.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Describe the problem. Nothing is sent without you.</source>
+        <translation>Опишите проблему. Без вашего согласия ничего не отправляется.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Version</source>
+        <translation>Версия</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>System</source>
+        <translation>Система</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>When</source>
+        <translation>Когда</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>unknown</source>
+        <translation>неизвестно</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>This happened right after updating from v%1.</source>
+        <translation>Это произошло сразу после обновления с версии v%1.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>What were you doing?</source>
+        <translation>Что вы делали?</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I connected the robot over BLE and opened a workspace</source>
+        <translation>Я подключил робота по BLE и открыл рабочее пространство</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Technical details</source>
+        <translation>Технические подробности</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Stack trace</source>
+        <translation>Трассировка стека</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Log (last %1 lines)</source>
+        <translation>Журнал (последние строк: %1)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Copy report</source>
+        <translation>Копировать отчёт</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Save…</source>
+        <translation>Сохранить…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Save report in folder</source>
+        <translation>Сохранить отчёт в папку</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+3"/>
+        <source>Save report</source>
+        <translation>Сохранить отчёт</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>The report could not be saved: %1</source>
+        <translation>Не удалось сохранить отчёт: %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Report saved in %1</source>
+        <translation>Отчёт сохранён в %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Don&apos;t send</source>
+        <translation>Не отправлять</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open issue</source>
+        <translation>Открыть issue</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copies the report and opens the issue page — paste it there.</source>
+        <translation>Копирует отчёт и открывает страницу issue — вставьте его туда.</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DashboardCell</name>
     <message>
         <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+514"/>
@@ -2796,7 +2915,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+685"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+688"/>
         <source>Bring to Front</source>
         <translation>На передний план</translation>
     </message>
@@ -3590,7 +3709,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+240"/>
+        <location filename="../lib/core/homepage.cpp" line="+228"/>
         <source>The deep scan found nothing new.</source>
         <translation>Глубокий поиск не нашёл ничего нового.</translation>
     </message>
@@ -3604,7 +3723,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message>
-        <location line="+207"/>
+        <location line="+213"/>
         <source>Welcome to TraceView</source>
         <translation>Добро пожаловать в TraceView</translation>
     </message>
@@ -3690,7 +3809,7 @@ Allowed: %1</source>
         <translation>Проект без названия</translation>
     </message>
     <message numerus="yes">
-        <location line="+1"/>
+        <location line="+2"/>
         <source>%n device(s)</source>
         <translation>
             <numerusform>%n устройство</numerusform>
@@ -3699,7 +3818,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+13"/>
+        <location line="+16"/>
         <source>%n widget(s)</source>
         <translation>
             <numerusform>%n виджет</numerusform>
@@ -3708,7 +3827,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+55"/>
         <source>No recent projects yet.</source>
         <translation>Недавних проектов пока нет.</translation>
     </message>
@@ -3718,7 +3837,7 @@ Allowed: %1</source>
         <translation>%1 (открывается при запуске)</translation>
     </message>
     <message>
-        <location line="+122"/>
+        <location line="+121"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
@@ -4089,7 +4208,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::MainWindow</name>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="+388"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+389"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>Это устройство несёт ещё %n устройство (%1). Сначала удалите или перенаправьте его.</numerusform>
@@ -4103,7 +4222,7 @@ Allowed: %1</source>
         <translation>, </translation>
     </message>
     <message>
-        <location line="+381"/>
+        <location line="+373"/>
         <source>AI assistant access is off.</source>
         <translation>Доступ ИИ-ассистентов выключен.</translation>
     </message>
@@ -4273,12 +4392,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4575"/>
+        <location line="+4598"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-4568"/>
+        <location line="-4591"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -4299,7 +4418,28 @@ Drops: %2</source>
         <translation>Отладка (&amp;D)</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+6"/>
+        <location line="+3"/>
+        <source>Force Crash</source>
+        <translation>Принудительный сбой</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceView will crash right now, without saving. The crash report opens the next time you start it.</source>
+        <translation>TraceView сейчас аварийно завершится без сохранения. Отчёт о сбое откроется при следующем запуске.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Crash Now</source>
+        <translation>Сбой сейчас</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>Отмена</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Keyboard Diagnostics</source>
         <translation>Диагностика клавиатуры</translation>
     </message>
@@ -4319,12 +4459,17 @@ Drops: %2</source>
         <translation>Поддержать (&amp;P)</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+4"/>
+        <source>Report a &amp;Bug</source>
+        <translation>Сообщить об &amp;ошибке</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>More options</source>
         <translation>Другие параметры</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Connected as: %1</source>
         <translation>Подключён как: %1</translation>
     </message>
@@ -4354,7 +4499,7 @@ Drops: %2</source>
         <translation>Войти в режим разработчика (&amp;E)...</translation>
     </message>
     <message>
-        <location line="+196"/>
+        <location line="+198"/>
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
@@ -4405,18 +4550,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3820"/>
+        <location line="+3813"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3818"/>
-        <location line="+3818"/>
+        <location line="-3811"/>
+        <location line="+3811"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3775"/>
+        <location line="-3768"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -4462,12 +4607,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3741"/>
+        <location line="+3734"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-3652"/>
+        <location line="-3645"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>Главная</translation>
@@ -4662,7 +4807,7 @@ Drops: %2</source>
         <translation>Пример панели</translation>
     </message>
     <message>
-        <location line="+77"/>
+        <location line="+70"/>
         <source>Dongle</source>
         <translation>Донгл</translation>
     </message>
@@ -4710,13 +4855,13 @@ Drops: %2</source>
         <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+36"/>
+        <location line="+40"/>
         <location line="+37"/>
         <source>Update</source>
         <translation>Обновить</translation>
     </message>
     <message>
-        <location line="-89"/>
+        <location line="-93"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>Для автоматической установки нужно запускать AppImage. Скачайте AppImage со страницы релиза.</translation>
     </message>
@@ -4742,7 +4887,7 @@ Drops: %2</source>
         <translation>Подтвердите установку в установщике Android.</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+22"/>
         <source>Close TraceView</source>
         <translation>Закрыть TraceView</translation>
     </message>
@@ -4761,13 +4906,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3837"/>
-        <location line="+3522"/>
+        <location line="-3834"/>
+        <location line="+3515"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-3447"/>
+        <location line="-3440"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -4783,12 +4928,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Имя:</translation>
     </message>
     <message>
-        <location line="-2235"/>
+        <location line="-2253"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2236"/>
+        <location line="+2254"/>
         <source>Workspace</source>
         <translation>Рабочее пространство</translation>
     </message>
@@ -4814,23 +4959,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3020"/>
+        <location line="+3013"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-3017"/>
+        <location line="-3010"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3022"/>
+        <location line="+3015"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-3019"/>
+        <location line="-3012"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -5028,7 +5173,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+618"/>
+        <location line="+611"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>Открыть проект</translation>
@@ -7389,6 +7534,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Command</source>
         <translation>Команда</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SplashScreen</name>
+    <message>
+        <location filename="../lib/crash/splashscreen.cpp" line="+52"/>
+        <source>Updated from v%1 to v%2</source>
+        <translation>Обновлено с v%1 до v%2</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Loading…</source>
+        <translation>Загрузка…</translation>
     </message>
 </context>
 <context>

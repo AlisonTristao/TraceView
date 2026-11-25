@@ -896,7 +896,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+156"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+159"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -1093,8 +1093,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
     </message>
     <message>
         <location line="+21"/>
-        <location line="+72"/>
-        <location line="+108"/>
+        <location line="+73"/>
+        <location line="+107"/>
         <source>Downloaded installer not found: %1</source>
         <translation>未找到已下载的安装程序: %1</translation>
     </message>
@@ -1110,12 +1110,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>无法将下载的 APK 共享给软件包安装程序。</translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+64"/>
         <source>Couldn&apos;t write the update script.</source>
         <translation>无法写入更新脚本。</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+24"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>自动安装需要运行 AppImage。请从发布页面下载 AppImage。</translation>
     </message>
@@ -2433,6 +2433,125 @@ Allowed: %1</source>
     </message>
 </context>
 <context>
+    <name>traceview::CrashReportDialog</name>
+    <message>
+        <location filename="../lib/crash/crashreportdialog.cpp" line="+39"/>
+        <source>TraceView closed unexpectedly</source>
+        <translation>TraceView 意外关闭</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Report a bug</source>
+        <translation>报告错误</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>This report helps find the problem. Nothing is sent without you.</source>
+        <translation>此报告有助于查找问题。未经您同意，不会发送任何内容。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Describe the problem. Nothing is sent without you.</source>
+        <translation>请描述问题。未经您同意，不会发送任何内容。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Version</source>
+        <translation>版本</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>System</source>
+        <translation>系统</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>When</source>
+        <translation>时间</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>This happened right after updating from v%1.</source>
+        <translation>此问题发生在从 v%1 更新后不久。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>What were you doing?</source>
+        <translation>您当时在做什么？</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>I connected the robot over BLE and opened a workspace</source>
+        <translation>我通过 BLE 连接了机器人并打开了工作区</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Technical details</source>
+        <translation>技术细节</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Stack trace</source>
+        <translation>堆栈跟踪</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Log (last %1 lines)</source>
+        <translation>日志（最近 %1 行）</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Copy report</source>
+        <translation>复制报告</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Save…</source>
+        <translation>保存…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Save report in folder</source>
+        <translation>将报告保存到文件夹</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+3"/>
+        <source>Save report</source>
+        <translation>保存报告</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>The report could not be saved: %1</source>
+        <translation>无法保存报告：%1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Report saved in %1</source>
+        <translation>报告已保存至 %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Don&apos;t send</source>
+        <translation>不发送</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open issue</source>
+        <translation>打开 Issue</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copies the report and opens the issue page — paste it there.</source>
+        <translation>复制报告并打开 Issue 页面，请在那里粘贴。</translation>
+    </message>
+</context>
+<context>
     <name>traceview::DashboardCell</name>
     <message>
         <location filename="../lib/dashboard/widgets/chartstyle.cpp" line="+514"/>
@@ -2794,7 +2913,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DashboardGrid</name>
     <message>
-        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+685"/>
+        <location filename="../lib/dashboard/dashboardgrid.cpp" line="+688"/>
         <source>Bring to Front</source>
         <translation>置于顶层</translation>
     </message>
@@ -3588,7 +3707,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::HomePage</name>
     <message>
-        <location filename="../lib/core/homepage.cpp" line="+240"/>
+        <location filename="../lib/core/homepage.cpp" line="+228"/>
         <source>The deep scan found nothing new.</source>
         <translation>深度扫描未发现新设备。</translation>
     </message>
@@ -3600,7 +3719,7 @@ Allowed: %1</source>
         </translation>
     </message>
     <message>
-        <location line="+207"/>
+        <location line="+213"/>
         <source>Welcome to TraceView</source>
         <translation>欢迎使用 TraceView</translation>
     </message>
@@ -3686,21 +3805,21 @@ Allowed: %1</source>
         <translation>未命名项目</translation>
     </message>
     <message numerus="yes">
-        <location line="+1"/>
+        <location line="+2"/>
         <source>%n device(s)</source>
         <translation>
             <numerusform>%n 个设备</numerusform>
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+13"/>
+        <location line="+16"/>
         <source>%n widget(s)</source>
         <translation>
             <numerusform>%n 个小部件</numerusform>
         </translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+55"/>
         <source>No recent projects yet.</source>
         <translation>暂无最近的项目。</translation>
     </message>
@@ -3710,7 +3829,7 @@ Allowed: %1</source>
         <translation>%1（启动时打开）</translation>
     </message>
     <message>
-        <location line="+122"/>
+        <location line="+121"/>
         <source>Connected</source>
         <translation>已连接</translation>
     </message>
@@ -4081,7 +4200,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::MainWindow</name>
     <message numerus="yes">
-        <location filename="../lib/core/mainwindow.cpp" line="+388"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+389"/>
         <source>This device carries %n other device(s) (%1). Remove or repoint them first.</source>
         <translation>
             <numerusform>此设备还承载 %n 个其他设备（%1）。请先移除或重新指向它们。</numerusform>
@@ -4093,7 +4212,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+381"/>
+        <location line="+373"/>
         <source>AI assistant access is off.</source>
         <translation>AI 助手访问已关闭。</translation>
     </message>
@@ -4263,12 +4382,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4575"/>
+        <location line="+4598"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-4568"/>
+        <location line="-4591"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -4289,7 +4408,28 @@ Drops: %2</source>
         <translation>调试(&amp;D)</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+6"/>
+        <location line="+3"/>
+        <source>Force Crash</source>
+        <translation>强制崩溃</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>TraceView will crash right now, without saving. The crash report opens the next time you start it.</source>
+        <translation>TraceView 将立即崩溃，不保存任何内容。下次启动时会打开崩溃报告。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Crash Now</source>
+        <translation>立即崩溃</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Keyboard Diagnostics</source>
         <translation>键盘诊断</translation>
     </message>
@@ -4309,12 +4449,17 @@ Drops: %2</source>
         <translation>捐赠(&amp;T)</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+4"/>
+        <source>Report a &amp;Bug</source>
+        <translation>报告错误(&amp;B)</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>More options</source>
         <translation>更多选项</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+35"/>
         <source>Connected as: %1</source>
         <translation>已连接为: %1</translation>
     </message>
@@ -4344,7 +4489,7 @@ Drops: %2</source>
         <translation>进入开发者模式(&amp;E)...</translation>
     </message>
     <message>
-        <location line="+196"/>
+        <location line="+198"/>
         <source>Add</source>
         <translation>添加</translation>
     </message>
@@ -4395,18 +4540,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3820"/>
+        <location line="+3813"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-3818"/>
-        <location line="+3818"/>
+        <location line="-3811"/>
+        <location line="+3811"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-3775"/>
+        <location line="-3768"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -4452,12 +4597,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3741"/>
+        <location line="+3734"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-3652"/>
+        <location line="-3645"/>
         <location line="+500"/>
         <source>Home</source>
         <translation>主页</translation>
@@ -4652,7 +4797,7 @@ Drops: %2</source>
         <translation>示例仪表板</translation>
     </message>
     <message>
-        <location line="+77"/>
+        <location line="+70"/>
         <source>Dongle</source>
         <translation>加密狗</translation>
     </message>
@@ -4700,13 +4845,13 @@ Drops: %2</source>
         <location line="+8"/>
         <location line="+9"/>
         <location line="+8"/>
-        <location line="+36"/>
+        <location line="+40"/>
         <location line="+37"/>
         <source>Update</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location line="-89"/>
+        <location line="-93"/>
         <source>Automatic installation requires running an AppImage. Download the AppImage from the release page.</source>
         <translation>自动安装需要运行 AppImage。请从发布页面下载 AppImage。</translation>
     </message>
@@ -4732,7 +4877,7 @@ Drops: %2</source>
         <translation>请在 Android 安装程序中确认安装。</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+22"/>
         <source>Close TraceView</source>
         <translation>关闭 TraceView</translation>
     </message>
@@ -4751,13 +4896,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-3837"/>
-        <location line="+3522"/>
+        <location line="-3834"/>
+        <location line="+3515"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-3447"/>
+        <location line="-3440"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
@@ -4773,12 +4918,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名称:</translation>
     </message>
     <message>
-        <location line="-2235"/>
+        <location line="-2253"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+2236"/>
+        <location line="+2254"/>
         <source>Workspace</source>
         <translation>工作区</translation>
     </message>
@@ -4804,23 +4949,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3020"/>
+        <location line="+3013"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-3017"/>
+        <location line="-3010"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3022"/>
+        <location line="+3015"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-3019"/>
+        <location line="-3012"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -5018,7 +5163,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+15"/>
-        <location line="+618"/>
+        <location line="+611"/>
         <location line="+4"/>
         <source>Open Project</source>
         <translation>打开项目</translation>
@@ -7371,6 +7516,19 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+1"/>
         <source>Command</source>
         <translation>命令</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::SplashScreen</name>
+    <message>
+        <location filename="../lib/crash/splashscreen.cpp" line="+52"/>
+        <source>Updated from v%1 to v%2</source>
+        <translation>已从 v%1 更新到 v%2</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Loading…</source>
+        <translation>正在加载…</translation>
     </message>
 </context>
 <context>
