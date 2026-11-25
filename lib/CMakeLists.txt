@@ -842,6 +842,8 @@ add_library(traceview_ui STATIC
     core/aboutdialog.h
     core/agentapptools.cpp
     core/agentapptools.h
+    core/appnavbar.cpp
+    core/appnavbar.h
     core/agentdevicetools.cpp
     core/agentpreferencetools.cpp
     core/shortcutsdialog.cpp
@@ -894,10 +896,8 @@ add_library(traceview_ui STATIC
     core/serialwidgetbridge.h
     core/usermodemanager.cpp
     core/usermodemanager.h
-    core/workspaceswitcher.cpp
-    core/workspaceswitcher.h
-    core/workspacedock.cpp
-    core/workspacedock.h
+    core/workspacestrip.cpp
+    core/workspacestrip.h
     core/touchscroll.cpp
     core/touchscroll.h
     core/inputdiagnostics.cpp

@@ -533,7 +533,7 @@ void AgentAppTools::registerWorkspaceTools(MainWindow* window, ToolRegistry* reg
         const QString id = window->createWorkspace(name);
         if (args.contains("icon")) {
             workspaces.setIconFor(id, args.value("icon").toString());
-            window->refreshWorkspaceSwitcher();
+            window->refreshWorkspaceStrip();
         }
         window->postStatus(QCoreApplication::translate("AgentAppTools",
                                                        "An AI assistant created workspace \"%1\".")
@@ -588,7 +588,7 @@ void AgentAppTools::registerWorkspaceTools(MainWindow* window, ToolRegistry* reg
         if (args.contains("icon")) {
             workspaces.setIconFor(id, args.value("icon").toString());
         }
-        window->refreshWorkspaceSwitcher();
+        window->refreshWorkspaceStrip();
         reply(AgentToolResult::json(QJsonObject{
             {"id", id}, {"name", workspaces.nameFor(id)}, {"icon", workspaces.iconFor(id)}}));
     };

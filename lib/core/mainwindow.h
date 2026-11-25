@@ -71,15 +71,15 @@ class SerialWidgetBridge;
 class SettingsPage;
 class UpdateChecker;
 class UpdateDownloader;
-class WorkspaceDock;
+class AppNavBar;
 class NotificationToasts;
 class NotificationBell;
 class NotificationPanel;
 class StartupLoadingOverlay;
 class ToolRegistry;
-class WorkspaceSwitcher;
+class WorkspaceStrip;
 
-// WorkspaceSwitcher's id for the built-in Subscriptions view: listed among
+// WorkspaceStrip's id for the built-in Subscriptions view: listed among
 // the workspaces but not one of WorkspaceManager's.
 inline constexpr const char* kSubscriptionsWorkspaceId = "builtin:subscriptions";
 
@@ -265,11 +265,14 @@ private:
     Ribbon* buildRibbon();
     void buildPropertiesPanel();
     void buildLayersPanel();
-    void buildWorkspaceSwitcher();
+    void buildWorkspaceStrip();
+    // Shows m_workspaceStrip only on the Dashboard tab and points
+    // m_appNavBar at the current tab (`index` is the ribbon's).
+    void updateNavigationChrome(int index);
     // Pushes WorkspaceManager's current workspace list/active id into
-    // m_workspaceSwitcher. Called after any mutation (switch/create/delete)
+    // m_workspaceStrip. Called after any mutation (switch/create/delete)
     // and on project load/new/save.
-    void refreshWorkspaceSwitcher();
+    void refreshWorkspaceStrip();
     // Snapshots the outgoing workspace's dashboard, makes `id` active, and
     // reloads DashboardGrid from it -- the same fromJson()/undo-clear/
     // refresh sequence onNewProject()/openRecentFile() use. No-op if `id`
@@ -873,12 +876,12 @@ private:
     // See applyPendingDeviceBreakpoint().
     bool m_deviceBreakpointPending = false;
     Ribbon* m_ribbon = nullptr;
-    WorkspaceSwitcher* m_workspaceSwitcher = nullptr;
+    // The workspace chips above the canvas, shown only on the Dashboard tab
+    // (updateNavigationChrome()). Fed by refreshWorkspaceStrip().
+    WorkspaceStrip* m_workspaceStrip = nullptr;
     // Takes m_statusRow's place in compact chrome (see
-    // updateChromeVisibility()): the bottom bar becomes icon-only workspace
-    // navigation. Fed the same entries as m_workspaceSwitcher by
-    // refreshWorkspaceSwitcher().
-    WorkspaceDock* m_workspaceDock = nullptr;
+    // updateChromeVisibility()): Home / Dashboard / Robots / Notifications.
+    AppNavBar* m_appNavBar = nullptr;
     // Status messages as translucent cards over the dashboard's bottom-right
     // corner (see notificationtoasts.h) -- postStatus() feeds it.
     NotificationToasts* m_notificationToasts = nullptr;
@@ -1125,7 +1128,7 @@ private:
     // QMainWindow itself, outside centralWidget()) could not. Normal widgets
     // (m_fullscreenButton) on the left, a
     // stretch (m_statusMessageLabel doubles as it), permanent widgets
-    // (m_workspaceSwitcher, m_screenSizeButton) on the right -- same
+    // (m_notificationBell, m_screenSizeButton) on the right -- same
     // visual order the old statusBar()->addWidget()/addPermanentWidget() call
     // sites built, minus m_optionsButton (moved to m_chromeTopBar instead).
     QWidget* m_statusRow = nullptr;

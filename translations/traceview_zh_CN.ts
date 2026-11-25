@@ -913,7 +913,7 @@ Allow it to connect devices and send them commands until AI assistant access is 
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="+159"/>
+        <location filename="../lib/core/mainwindow.cpp" line="+158"/>
         <source>TraceView Project (*.tvproj)</source>
         <translation>TraceView 项目 (*.tvproj)</translation>
     </message>
@@ -934,14 +934,12 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>调试 -- 合成图表数据</translation>
     </message>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="+87"/>
         <source>Rename workspace</source>
-        <translation>重命名工作区</translation>
+        <translation type="vanished">重命名工作区</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>Delete workspace</source>
-        <translation>删除工作区</translation>
+        <translation type="vanished">删除工作区</translation>
     </message>
     <message>
         <location filename="../lib/devices/deviceconfigdialog.cpp" line="+66"/>
@@ -954,9 +952,8 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>(未命名)</translation>
     </message>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="-25"/>
         <source>Change icon</source>
-        <translation>更改图标</translation>
+        <translation type="vanished">更改图标</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
@@ -1422,6 +1419,29 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+8"/>
         <source>1200 baud resets the ESP32-S3 into its bootloader; using 115200</source>
         <translation>1200 波特率会使 ESP32-S3 重启进入引导程序;改用 115200</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::AppNavBar</name>
+    <message>
+        <location filename="../lib/core/appnavbar.cpp" line="+101"/>
+        <source>Home</source>
+        <translation>首页</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dashboard</source>
+        <translation>仪表板</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Robots</source>
+        <translation>机器人</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Notifications</source>
+        <translation>通知</translation>
     </message>
 </context>
 <context>
@@ -3524,7 +3544,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DonateDialog</name>
     <message>
-        <location filename="../lib/core/donatedialog.cpp" line="+129"/>
+        <location filename="../lib/core/donatedialog.cpp" line="+128"/>
         <location line="+7"/>
         <source>Support TraceView</source>
         <translation>支持 TraceView</translation>
@@ -3536,8 +3556,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+5"/>
+        <source>Pix key: %1</source>
+        <translation>Pix 密钥：%1</translation>
+    </message>
+    <message>
         <source>Pix key (phone): %1</source>
-        <translation>Pix 密钥（手机号）：%1</translation>
+        <translation type="vanished">Pix 密钥（手机号）：%1</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -4283,7 +4307,7 @@ Allowed: %1</source>
         <translation>、</translation>
     </message>
     <message>
-        <location line="+373"/>
+        <location line="+366"/>
         <source>AI assistant access is off.</source>
         <translation>AI 助手访问已关闭。</translation>
     </message>
@@ -4454,12 +4478,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4706"/>
+        <location line="+4709"/>
         <source>Later</source>
         <translation>稍后</translation>
     </message>
     <message>
-        <location line="-4699"/>
+        <location line="-4702"/>
         <source>&amp;Access</source>
         <translation>访问(&amp;A)</translation>
     </message>
@@ -4609,18 +4633,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3897"/>
+        <location line="+3900"/>
         <source>Undo</source>
         <translation>撤销</translation>
     </message>
     <message>
-        <location line="-3895"/>
-        <location line="+3895"/>
+        <location line="-3898"/>
+        <location line="+3898"/>
         <source>Redo</source>
         <translation>重做</translation>
     </message>
     <message>
-        <location line="-3852"/>
+        <location line="-3855"/>
         <source>Add Device</source>
         <translation>添加设备</translation>
     </message>
@@ -4666,13 +4690,13 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3818"/>
+        <location line="+3821"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>全屏仪表盘(F11)</translation>
     </message>
     <message>
-        <location line="-3729"/>
-        <location line="+500"/>
+        <location line="-3732"/>
+        <location line="+520"/>
         <source>Home</source>
         <translation>主页</translation>
     </message>
@@ -4758,7 +4782,7 @@ Drops: %2</source>
         <translation>此工作区现在有自己的外观。</translation>
     </message>
     <message>
-        <location line="+286"/>
+        <location line="+285"/>
         <source>Grid precision: %1×</source>
         <translation>网格精度：%1×</translation>
     </message>
@@ -4787,12 +4811,12 @@ Drops: %2</source>
 %3</translation>
     </message>
     <message>
-        <location line="+395"/>
+        <location line="+394"/>
         <source>Notifications</source>
         <translation>通知</translation>
     </message>
     <message>
-        <location line="+158"/>
+        <location line="+143"/>
         <source>Close</source>
         <translation>关闭</translation>
     </message>
@@ -4993,18 +5017,18 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>关闭应用</translation>
     </message>
     <message>
-        <location line="-3918"/>
-        <location line="+3599"/>
+        <location line="-3921"/>
+        <location line="+3602"/>
         <source>Devices</source>
         <translation>设备</translation>
     </message>
     <message>
-        <location line="-3524"/>
+        <location line="-3506"/>
         <source>Subscriptions</source>
         <translation>订阅</translation>
     </message>
     <message>
-        <location line="+269"/>
+        <location line="+268"/>
         <source>New Workspace</source>
         <translation>新建工作区</translation>
     </message>
@@ -5015,12 +5039,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>名称:</translation>
     </message>
     <message>
-        <location line="-2277"/>
+        <location line="-2290"/>
         <source>TraceView v%1</source>
         <translation>TraceView v%1</translation>
     </message>
     <message>
-        <location line="+1186"/>
+        <location line="+1179"/>
         <source>&amp;Help</source>
         <translation>帮助(&amp;H)</translation>
     </message>
@@ -5045,7 +5069,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>强制崩溃...</translation>
     </message>
     <message>
-        <location line="+1045"/>
+        <location line="+1065"/>
         <source>Workspace</source>
         <translation>工作区</translation>
     </message>
@@ -5071,23 +5095,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3097"/>
+        <location line="+3080"/>
         <source>Add widget</source>
         <translation>添加控件</translation>
     </message>
     <message>
-        <location line="-3094"/>
+        <location line="-3077"/>
         <source>Remove selected widget (%1)</source>
         <translation>删除所选控件(%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3099"/>
+        <location line="+3082"/>
         <source>Add device</source>
         <translation>添加设备</translation>
     </message>
     <message>
-        <location line="-3096"/>
+        <location line="-3079"/>
         <source>Remove selected device (%1)</source>
         <translation>删除所选设备(%1)</translation>
     </message>
@@ -5137,7 +5161,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>取消编组 — 让所选控件恢复独立移动</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+27"/>
         <source>Screen size: Small</source>
         <translation>屏幕尺寸: 小</translation>
     </message>
@@ -5152,7 +5176,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>屏幕尺寸: 大</translation>
     </message>
     <message>
-        <location line="+272"/>
+        <location line="+270"/>
         <source>Disable editing — lock the dashboard layout</source>
         <translation>禁用编辑 — 锁定仪表盘布局</translation>
     </message>
@@ -5172,7 +5196,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>显示图层/属性面板</translation>
     </message>
     <message>
-        <location line="+399"/>
+        <location line="+385"/>
         <source>New Device</source>
         <translation>新设备</translation>
     </message>
@@ -5248,12 +5272,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>动效(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1681"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1684"/>
         <source>Dashboard</source>
         <translation>仪表盘</translation>
     </message>
     <message>
-        <location line="+2082"/>
+        <location line="+2085"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: 此 BLE 地址现在以另一台机器人身份应答 (应为 %2,实际为 %3)</translation>
     </message>
@@ -8265,12 +8289,31 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::WorkspaceDock</name>
     <message>
-        <location filename="../lib/core/workspacedock.cpp" line="+178"/>
+        <source>New Workspace…</source>
+        <translation type="vanished">新建工作区…</translation>
+    </message>
+    <message>
+        <source>Rename…</source>
+        <translation type="vanished">重命名…</translation>
+    </message>
+    <message>
+        <source>Change Icon…</source>
+        <translation type="vanished">更改图标…</translation>
+    </message>
+    <message>
+        <source>Delete Workspace</source>
+        <translation type="vanished">删除工作区</translation>
+    </message>
+</context>
+<context>
+    <name>traceview::WorkspaceStrip</name>
+    <message>
+        <location filename="../lib/core/workspacestrip.cpp" line="+204"/>
         <source>New Workspace…</source>
         <translation>新建工作区…</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+27"/>
         <source>Rename…</source>
         <translation>重命名…</translation>
     </message>
@@ -8288,9 +8331,8 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::WorkspaceSwitcher</name>
     <message>
-        <location filename="../lib/core/workspaceswitcher.cpp" line="+192"/>
         <source>New Workspace…</source>
-        <translation>新建工作区…</translation>
+        <translation type="vanished">新建工作区…</translation>
     </message>
 </context>
 </TS>
