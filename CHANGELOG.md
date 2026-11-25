@@ -14,6 +14,24 @@ release flow.
   texture. Dots and Grid now draw the snap grid itself in both modes, so it
   stays the same grid and follows the precision setting.
 
+## [5.0.2] - 2026-11-25
+
+### Changed
+
+- **Help menu**: About, Donate, Report a Bug and the developer tools no
+  longer sit loose on the menu bar. They are in one Help menu: Report a
+  Bug, Open Log Folder, About and Donate for everyone, and a Developer
+  Tools submenu (Debug Window, Keyboard Diagnostics, Copy Keyboard Log,
+  Force Crash) in Developer mode only. The phone's options menu has the
+  same Help submenu.
+
+### Fixed
+
+- Since 5.0.0 the Dashboard opened in the phone layout on every launch in
+  Developer mode. The app starts on the Home page, and the screen size was
+  measured from the Dashboard while it was still hidden behind it. It is
+  now measured when the Dashboard is first shown.
+
 ## [5.0.1] - 2026-11-25
 
 ### Added
