@@ -47,6 +47,64 @@ QByteArray buildAnswerMessage(const QString& name, quint32 address) {
     return message;
 }
 
+// One resource record: NAME (plain labels, or a 2-byte pointer when
+// `pointer` >= 0), TYPE, CLASS IN, TTL, RDLENGTH, RDATA.
+void appendRecord(QByteArray& out, const QByteArray& name, quint16 type, const QByteArray& rdata,
+                  int pointer = -1) {
+    if (pointer >= 0) {
+        out.append(char(0xC0 | (pointer >> 8)));
+        out.append(char(pointer & 0xFF));
+    } else {
+        for (const QByteArray& label : name.split('.')) {
+            appendLabel(out, label);
+        }
+        out.append(char(0));
+    }
+    out.append(char(type >> 8));
+    out.append(char(type & 0xFF));
+    out.append(char(0));
+    out.append(char(1));
+    out.append(QByteArray(4, char(0)));
+    out.append(char(rdata.size() >> 8));
+    out.append(char(rdata.size() & 0xFF));
+    out.append(rdata);
+}
+
+QByteArray plainName(const QByteArray& name) {
+    QByteArray out;
+    for (const QByteArray& label : name.split('.')) {
+        appendLabel(out, label);
+    }
+    out.append(char(0));
+    return out;
+}
+
+QByteArray srvData(quint16 port, const QByteArray& target) {
+    QByteArray out(4, char(0));  // priority, weight
+    out.append(char(port >> 8));
+    out.append(char(port & 0xFF));
+    out.append(plainName(target));
+    return out;
+}
+
+QByteArray txtData(const QList<QByteArray>& entries) {
+    QByteArray out;
+    for (const QByteArray& entry : entries) {
+        out.append(char(entry.size()));
+        out.append(entry);
+    }
+    return out;
+}
+
+// A header whose ANCOUNT/ARCOUNT are filled in by the caller.
+QByteArray responseHeader(int answers, int additional) {
+    QByteArray message(12, char(0));
+    message[2] = char(0x84);  // QR + AA, as a responder sets them
+    message[7] = char(answers);
+    message[11] = char(additional);
+    return message;
+}
+
 class TestMdnsResolver : public QObject {
     Q_OBJECT
 
@@ -58,6 +116,12 @@ private slots:
     void parseAAnswersFollowsCompressionPointer();
     void parseAAnswersIgnoresNonARecords();
     void parseAAnswersReturnsEmptyForTruncatedMessage();
+    void buildPtrQueryAsksForPtrRecords();
+    void parseServiceRecordsJoinsPtrSrvTxtAndA();
+    void parseServiceRecordsAcceptsSrvWithoutPtr();
+    void parseServiceRecordsSkipsInstanceWithoutSrv();
+    void parseServiceRecordsIgnoresOtherServiceTypes();
+    void parseServiceRecordsSurvivesTruncatedTxt();
 };
 
 void TestMdnsResolver::buildQueryEncodesHeaderAndQName() {
@@ -190,6 +254,76 @@ void TestMdnsResolver::parseAAnswersReturnsEmptyForTruncatedMessage() {
     QByteArray truncated(12, char(0));
     truncated[7] = char(1);  // claims ANCOUNT = 1 but has no answer section at all
     QVERIFY(parseAAnswers(truncated).isEmpty());
+}
+
+void TestMdnsResolver::buildPtrQueryAsksForPtrRecords() {
+    using traceview::mdns_detail::buildPtrQuery;
+    const QByteArray packet = buildPtrQuery(QStringLiteral("_btp._tcp.local"));
+    QCOMPARE(quint8(packet.at(5)), quint8(1));  // QDCOUNT = 1
+    QCOMPARE(packet.mid(12, packet.size() - 12 - 4), plainName("_btp._tcp.local"));
+    QCOMPARE(quint8(packet.at(packet.size() - 4)), quint8(0));
+    QCOMPARE(quint8(packet.at(packet.size() - 3)), quint8(12));  // QTYPE = PTR
+    QCOMPARE(quint8(packet.at(packet.size() - 1)), quint8(1));   // QCLASS = IN
+}
+
+void TestMdnsResolver::parseServiceRecordsJoinsPtrSrvTxtAndA() {
+    using traceview::mdns_detail::parseServiceRecords;
+    // The reply ESP-IDF's mdns component gives a PTR query: the PTR as the
+    // answer, SRV/TXT/A as additional records, names compressed.
+    QByteArray message = responseHeader(1, 3);
+    const int typeOffset = message.size();
+    appendRecord(message, "_btp._tcp.local", 12, plainName("Robo 2._btp._tcp.local"));
+    // The PTR's RDATA (the instance name) starts after NAME(17)+10 octets.
+    const int instanceOffset = typeOffset + 17 + 10;
+    appendRecord(message, QByteArray(), 33, srvData(44300, "robo-2.local"), instanceOffset);
+    appendRecord(message, QByteArray(), 16, txtData({"name=Robo 2"}), instanceOffset);
+    appendRecord(message, "robo-2.local", 1, QByteArray("\xC0\xA8\x00\x2A", 4));
+
+    const auto records = parseServiceRecords(message, QStringLiteral("_btp._tcp.local"));
+    QCOMPARE(records.size(), 1);
+    QCOMPARE(records[0].instance, QStringLiteral("robo 2._btp._tcp.local"));
+    QCOMPARE(records[0].host, QStringLiteral("robo-2.local"));
+    QCOMPARE(records[0].port, quint16(44300));
+    QCOMPARE(records[0].txtName, QStringLiteral("Robo 2"));
+    QCOMPARE(records[0].address, QHostAddress(QStringLiteral("192.168.0.42")));
+}
+
+void TestMdnsResolver::parseServiceRecordsAcceptsSrvWithoutPtr() {
+    using traceview::mdns_detail::parseServiceRecords;
+    QByteArray message = responseHeader(1, 0);
+    appendRecord(message, "furuta._btp._tcp.local", 33, srvData(44301, "furuta.local"));
+    const auto records = parseServiceRecords(message, QStringLiteral("_BTP._tcp.local"));
+    QCOMPARE(records.size(), 1);
+    QCOMPARE(records[0].port, quint16(44301));
+    QVERIFY(records[0].txtName.isEmpty());
+    QVERIFY(records[0].address.isNull());
+}
+
+void TestMdnsResolver::parseServiceRecordsSkipsInstanceWithoutSrv() {
+    using traceview::mdns_detail::parseServiceRecords;
+    QByteArray message = responseHeader(1, 0);
+    appendRecord(message, "_btp._tcp.local", 12, plainName("lonely._btp._tcp.local"));
+    QVERIFY(parseServiceRecords(message, QStringLiteral("_btp._tcp.local")).isEmpty());
+}
+
+void TestMdnsResolver::parseServiceRecordsIgnoresOtherServiceTypes() {
+    using traceview::mdns_detail::parseServiceRecords;
+    QByteArray message = responseHeader(2, 0);
+    appendRecord(message, "_http._tcp.local", 12, plainName("printer._http._tcp.local"));
+    appendRecord(message, "printer._http._tcp.local", 33, srvData(80, "printer.local"));
+    QVERIFY(parseServiceRecords(message, QStringLiteral("_btp._tcp.local")).isEmpty());
+}
+
+void TestMdnsResolver::parseServiceRecordsSurvivesTruncatedTxt() {
+    using traceview::mdns_detail::parseServiceRecords;
+    QByteArray message = responseHeader(2, 0);
+    appendRecord(message, "r._btp._tcp.local", 33, srvData(44300, "r.local"));
+    // The TXT entry claims 40 octets but the record holds 5.
+    appendRecord(message, "r._btp._tcp.local", 16, QByteArray("\x28name", 5));
+    const auto records = parseServiceRecords(message, QStringLiteral("_btp._tcp.local"));
+    QCOMPARE(records.size(), 1);
+    QVERIFY(records[0].txtName.isEmpty());
+    QVERIFY(parseServiceRecords(message.left(20), QStringLiteral("_btp._tcp.local")).isEmpty());
 }
 
 }  // namespace

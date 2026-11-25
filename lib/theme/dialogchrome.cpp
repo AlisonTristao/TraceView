@@ -230,6 +230,11 @@ DialogCard::DialogCard(const QString& title, QWidget* parent) : QFrame(parent) {
     m_title->setVisible(!title.isEmpty());
 }
 
+void DialogCard::setTitle(const QString& title) {
+    m_title->setText(title.toUpper());
+    m_title->setVisible(!title.isEmpty() || m_titleRow->count() > 1);
+}
+
 void DialogCard::addTitleWidget(QWidget* widget) {
     widget->setParent(this);
     m_titleRow->addWidget(widget, 0, Qt::AlignVCenter);

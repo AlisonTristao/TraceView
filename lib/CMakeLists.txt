@@ -520,6 +520,8 @@ target_link_libraries(traceview_diagnostics
 # the whole OTA tab (Widgets, devices, theme). Windows has no mDNS resolver
 # of its own -- see the class comment.
 add_library(traceview_mdns STATIC
+    ota/mdnsbrowser.cpp
+    ota/mdnsbrowser.h
     ota/mdnsresolver.cpp
     ota/mdnsresolver.h
 )
@@ -824,6 +826,8 @@ add_library(traceview_ui STATIC
     core/dockresizegrip.h
     core/fontmenuaction.cpp
     core/fontmenuaction.h
+    core/homepage.cpp
+    core/homepage.h
     core/layerspanel.cpp
     core/layerspanel.h
     core/logindialog.cpp
@@ -832,6 +836,8 @@ add_library(traceview_ui STATIC
     core/mainwindow.h
     core/manageusersdialog.cpp
     core/manageusersdialog.h
+    core/nearbyrobots.cpp
+    core/nearbyrobots.h
     core/dashboardgallerydialog.cpp
     core/dashboardgallerydialog.h
     core/settingspage.cpp
@@ -902,6 +908,8 @@ target_link_libraries(traceview_ui
         # too, not just traceview_diagram's own .cpp files.
         Qt6::Qml
         traceview_logs
+        # NearbyRobotsService browses mDNS for "_btp._tcp" (ota/mdnsbrowser.h).
+        traceview_mdns
         traceview_ota
         traceview_project
         traceview_protocol

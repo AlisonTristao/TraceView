@@ -94,6 +94,8 @@
 #include "logindialog.h"
 #include "logs/logviewer.h"
 #include "dashboardgallerydialog.h"
+#include "homepage.h"
+#include "nearbyrobots.h"
 #include "manageusersdialog.h"
 #include "ota/otadevicepanel.h"
 #include "ota/otatab.h"
@@ -382,6 +384,7 @@ QVector<SerialPortOption> currentSerialPorts() {
 #endif
 }
 #endif
+
 }  // namespace
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -710,6 +713,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         " background: transparent; }"
         "QTreeWidget#subscriptionsWorkspace::item:hover { background: transparent; }");
     m_contentStack->addWidget(m_subscriptionsTable);
+    buildHomePage();
     // Each log opened via onOpenLogFile() (File > Open Log Offline) gets its
     // own LogViewer, added here on demand -- see m_openLogTabs.
     contentLayout->addWidget(m_contentStack);
@@ -893,6 +897,11 @@ void MainWindow::finishStartup() {
     openStartupDashboard();
     delete m_startupOverlay;
     m_startupOverlay = nullptr;
+    // The app opens on Home, with the startup dashboard already loaded
+    // behind it: a robot that connects by itself in the next seconds takes
+    // the user straight there (see onDeviceConnectionStateChanged()).
+    showHomeTab();
+    m_homeAutoLeaveUntilMs = QDateTime::currentMSecsSinceEpoch() + 15000;
     // Only now: a tool call before this would edit the placeholder dashboard
     // the startup one is about to replace.
     syncAgentBridge();
@@ -1730,12 +1739,16 @@ void MainWindow::applyUserMode(UserModeManager::UserMode mode) {
         // hidden behind the now-invisible tab bar -- "View as user" included.
         // Walked back to front: each close shifts the indices after it.
         for (int i = m_ribbon->count() - 1; i >= 0; --i) {
-            if (i != m_dashboardTabIndex && i != m_devicesTabIndex) {
+            if (i != m_dashboardTabIndex && i != m_devicesTabIndex && i != m_homeTabIndex) {
                 onLogTabCloseRequested(i);
             }
         }
     }
     m_ribbon->setTabVisible(m_devicesTabIndex, isDeveloper);
+    if (m_homePage) {
+        m_homePage->setDeveloperMode(isDeveloper);
+        refreshHomePage();
+    }
 
     // File (projects, offline logs, OTA, BTP monitor) is Developer-only.
     // Hiding the menu action alone would leave its shortcuts live (the menu
@@ -2215,6 +2228,15 @@ Ribbon* MainWindow::buildRibbon() {
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this,
             [this](const ThemePalette&) { updateRibbonIcons(); });
 
+    // Back to the Home tab -- the only way there in User mode, where the tab
+    // row is hidden.
+    m_homeButton = new QToolButton(dashboardPage);
+    m_homeButton->setObjectName(QStringLiteral("homeButton"));
+    m_homeButton->setAutoRaise(true);
+    m_homeButton->setFixedSize(kRibbonButtonSize, kRibbonButtonSize);
+    m_homeButton->setIconSize(QSize(kRibbonIconSize, kRibbonIconSize));
+    connect(m_homeButton, &QToolButton::clicked, this, &MainWindow::showHomeTab);
+    dashboardLayout->addWidget(m_homeButton);
     dashboardLayout->addWidget(m_deviceStatusLabel);
     dashboardLayout->addStretch();
     dashboardLayout->addWidget(m_togglePanelsButton);
@@ -2242,6 +2264,12 @@ Ribbon* MainWindow::buildRibbon() {
     devicesLayout->addStretch();
 
     auto* ribbon = new Ribbon(this);
+    // Home's row is built empty: it only hosts the options button (see
+    // updateChromeVisibility()); everything else is on the page itself.
+    auto* homeRibbonPage = new QWidget(this);
+    homeRibbonPage->setObjectName("ribbonPage");
+    homeRibbonPage->setFixedHeight(kRibbonPageHeight);
+    m_homeTabIndex = ribbon->addTab(tr("Home"), homeRibbonPage);
     m_dashboardTabIndex = ribbon->addTab(tr("Dashboard"), dashboardPage);
     m_devicesTabIndex = ribbon->addTab(tr("Devices"), devicesPage);
 
@@ -2738,6 +2766,11 @@ void MainWindow::updateRibbonIcons() {
     m_removeAction->setToolTip(
         tr("Remove selected widget (%1)")
             .arg(m_removeAction->shortcut().toString(QKeySequence::NativeText)));
+    if (m_homeButton) {
+        m_homeButton->setIcon(IconLibrary::instance().icon(QStringLiteral("lucide:house"),
+                                                           palette.textPrimary, kRibbonIconSize));
+        m_homeButton->setToolTip(tr("Home"));
+    }
     m_addDeviceAction->setIcon(makePlusIcon(palette.textPrimary));
     m_addDeviceAction->setToolTip(withKey(tr("Add device"), m_addDeviceAction));
     m_removeDeviceAction->setIcon(makeMinusIcon(palette.danger));
@@ -3130,6 +3163,9 @@ void MainWindow::onRibbonTabChanged(int index) {
                                  : static_cast<QWidget*>(m_dashboardScrollArea);
     if (index == m_devicesTabIndex) {
         activeContent = m_devicesGrid;
+    } else if (index == m_homeTabIndex && m_homePage != nullptr) {
+        activeContent = m_homePage;
+        refreshHomePage();
     } else if (m_otaTabActive) {
         activeContent = m_otaTab;
     } else if (currentPage != nullptr && currentPage == m_btpMonitorTabPage) {
@@ -3889,6 +3925,7 @@ void MainWindow::refreshDeviceStatusLabel() {
     if (!m_deviceStatusLabel) {
         return;
     }
+    refreshHomePage();
     const QVector<Device> devices = m_devicesGrid->devices();
     if (devices.isEmpty()) {
         m_deviceStatusLabel->setText(tr("No devices configured"));
@@ -4819,6 +4856,13 @@ void MainWindow::onDeviceConnectionStateChanged(const QString& deviceId, bool co
         // reconcile that follows, promptly -- not on the next 1 s tick.
         syncHubPeerWatches();
         reconcileHubChildPresence();
+        // Startup: the dashboard's robot came up while Home was showing --
+        // take the user to the dashboard (once; see finishStartup()).
+        if (m_homeAutoLeaveUntilMs > 0 && m_ribbon->currentIndex() == m_homeTabIndex &&
+            QDateTime::currentMSecsSinceEpoch() < m_homeAutoLeaveUntilMs) {
+            m_homeAutoLeaveUntilMs = 0;
+            showDashboardTab();
+        }
     }
     refreshDeviceStatusLabel();
 }
@@ -5042,6 +5086,214 @@ void MainWindow::onOpenGallery() {
     if (!toOpen.isEmpty()) {
         openRecentFile(toOpen);
     }
+}
+
+void MainWindow::buildHomePage() {
+    m_nearbyRobots = new NearbyRobotsService(this);
+    // A deep scan leaves alone whatever this app is already dialing or
+    // talking to (see NearbyRobotsService::setBusyTargetsProvider()).
+    m_nearbyRobots->setBusyTargetsProvider([this]() {
+        QSet<QString> busy;
+        const auto addLink = [&busy](const DeviceLink& link) {
+            if (!link.portName.isEmpty()) {
+                busy.insert(link.portName);
+            }
+            if (!link.tcpHost.isEmpty()) {
+                busy.insert(link.tcpHost);
+            }
+        };
+        for (const Device& device : m_devicesGrid->devices()) {
+            const DeviceConnection* connection = m_deviceConnections.value(device.id);
+            if (connection == nullptr || !connection->wantsConnection()) {
+                continue;
+            }
+            addLink(deviceLinkAt(effectiveDevice(device), 0));
+            if (m_autoResolvedLinks.contains(device.id)) {
+                addLink(m_autoResolvedLinks.value(device.id));
+            }
+        }
+        for (const auto& probes : std::as_const(m_linkProbes)) {
+            for (const LinkProbe& probe : probes) {
+                addLink(probe.target);
+            }
+        }
+        return busy;
+    });
+    m_nearbyRobots->setExtraTcpPortsProvider([this]() {
+        QSet<quint16> ports;
+        for (const Device& device : m_devicesGrid->devices()) {
+            for (int i = 0; i < deviceLinkCount(device); ++i) {
+                const DeviceLink link = deviceLinkAt(device, i);
+                if (link.transportType == TransportType::Tcp && link.tcpPort != 0) {
+                    ports.insert(link.tcpPort);
+                }
+            }
+        }
+        return ports;
+    });
+
+    m_homePage = new HomePage(m_nearbyRobots, m_contentStack);
+    m_contentStack->addWidget(m_homePage);
+    m_homePage->setDeveloperMode(developerUiActive());
+    connect(m_homePage, &HomePage::openDashboardRequested, this, &MainWindow::showDashboardTab);
+    connect(m_homePage, &HomePage::openWorkspaceRequested, this, [this](const QString& id) {
+        showDashboardTab();
+        switchToWorkspace(id);
+    });
+    connect(m_homePage, &HomePage::newProjectRequested, this, [this] {
+        onNewProject();
+        showDashboardTab();
+    });
+    connect(m_homePage, &HomePage::openProjectRequested, this, [this] {
+        const QString before = ProjectStore::instance().currentPath();
+        onOpenProject();
+        if (ProjectStore::instance().currentPath() != before) {
+            showDashboardTab();
+        }
+    });
+    connect(m_homePage, &HomePage::openLogRequested, this, &MainWindow::onOpenLogFile);
+    connect(m_homePage, &HomePage::manageGalleryRequested, this, [this] {
+        const QString before = ProjectStore::instance().currentPath();
+        onOpenGallery();
+        if (ProjectStore::instance().currentPath() != before) {
+            showDashboardTab();
+        } else {
+            refreshHomePage();
+        }
+    });
+    const auto openPath = [this](const QString& path) {
+        const QString before = ProjectStore::instance().currentPath();
+        openRecentFile(path);
+        if (ProjectStore::instance().currentPath() != before || before == path) {
+            showDashboardTab();
+        }
+    };
+    connect(m_homePage, &HomePage::openPathRequested, this, openPath);
+    connect(m_homePage, &HomePage::openGalleryRequested, this,
+            [openPath](const QString& name) { openPath(DashboardGallery::pathFor(name)); });
+    connect(m_homePage, &HomePage::connectToggleRequested, this, [this](const QString& id) {
+        m_homeAutoLeaveUntilMs = 0;  // the user is driving now
+        onDeviceConnectToggleRequested(id);
+        refreshHomePage();
+    });
+    connect(m_homePage, &HomePage::addRobotRequested, this,
+            &MainWindow::addNearbyRobotToProject);
+}
+
+void MainWindow::refreshHomePage() {
+    if (m_homePage == nullptr || !m_homePage->isVisible()) {
+        return;  // refreshed again when its tab is shown
+    }
+    const QVector<Device> devices = m_devicesGrid->devices();
+    QVector<HomeDevice> rows;
+    rows.reserve(devices.size());
+    for (const Device& device : devices) {
+        // Hub children ride a dongle: not something to find nearby.
+        if (device.transportType == TransportType::HubChannel) {
+            continue;
+        }
+        const Device live = effectiveDevice(device);
+        HomeDevice row;
+        row.id = device.id;
+        row.name = device.name;
+        row.robotName = device.robotName;
+        row.serialPort = live.portName;
+        row.tcpHost = live.tcpHost;
+        row.bleAddress = live.bleAddress;
+        row.connected = device.connected;
+        const DeviceConnection* connection = m_deviceConnections.value(device.id);
+        row.connecting =
+            !device.connected && connection != nullptr && connection->wantsConnection();
+        rows.append(row);
+    }
+    m_homePage->setDevices(rows);
+
+    const QString path = ProjectStore::instance().currentPath();
+    HomeProjectSummary summary;
+    const QString galleryName = DashboardGallery::nameForPath(path);
+    if (DashboardGallery::isBuiltInExample(path)) {
+        summary.title = tr("Example dashboard");
+    } else if (!galleryName.isEmpty()) {
+        summary.title = galleryName;
+    } else if (!path.isEmpty()) {
+        summary.title = QFileInfo(path).completeBaseName();
+    }
+    summary.path = path;
+    const QString activeId = WorkspaceManager::instance().activeId();
+    for (const Workspace& workspace : WorkspaceManager::instance().workspaces()) {
+        // Same count get_app_state reports: the live grid for the active
+        // workspace, the saved layout for the others.
+        const int widgets = workspace.id == activeId
+                                ? m_dashboardGrid->items().size()
+                                : workspace.dashboard.value("items").toArray().size();
+        summary.workspaces.append({workspace.id, workspace.name, workspace.icon, widgets});
+    }
+    summary.devices = devices.size();
+    m_homePage->setProjectSummary(summary);
+    m_homePage->setRecentProjects(QSettings().value(kRecentFilesSettingsKey).toStringList());
+    m_homePage->setGallery(DashboardGallery::names(), DashboardGallery::defaultName());
+}
+
+void MainWindow::showHomeTab() {
+    if (m_homeTabIndex < 0) {
+        return;
+    }
+    m_ribbon->setCurrentIndex(m_homeTabIndex);
+    onRibbonTabChanged(m_homeTabIndex);
+}
+
+void MainWindow::showDashboardTab() {
+    m_homeAutoLeaveUntilMs = 0;
+    m_ribbon->setCurrentIndex(m_dashboardTabIndex);
+    onRibbonTabChanged(m_dashboardTabIndex);
+}
+
+void MainWindow::addNearbyRobotToProject(const NearbyRobot& robot) {
+    // A robot with a name is added the way the connections table's
+    // "automatic" links work: each link finds the robot by its name every
+    // time it dials (its IP changes on every reboot, its port when it is
+    // replugged). An unnamed one keeps the exact target it was found at.
+    const bool byName = !robot.name.isEmpty() && !robot.dongle;
+    QVector<DeviceLink> links;
+    if (!robot.serialPort.isEmpty()) {
+        DeviceLink link;
+        link.transportType = TransportType::Serial;
+        link.portName = robot.serialPort;
+        link.autoTarget = byName;
+        links.append(link);
+    }
+    if (!robot.tcpHost.isEmpty()) {
+        DeviceLink link;
+        link.transportType = TransportType::Tcp;
+        link.tcpHost = robot.tcpHost;
+        link.tcpPort = robot.tcpPort != 0 ? robot.tcpPort : quint16(44300);
+        link.autoTarget = byName;
+        links.append(link);
+    }
+    if (!robot.bleAddress.isEmpty()) {
+        DeviceLink link;
+        link.transportType = TransportType::Ble;
+        link.bleAddress = robot.bleAddress;
+        link.autoTarget = byName;
+        links.append(link);
+    }
+    if (links.isEmpty()) {
+        return;
+    }
+    Device device;
+    if (robot.dongle) {
+        device.name = tr("Dongle");
+    } else {
+        device.name = byName ? robot.name : tr("Robot");
+        device.robotName = robot.name;
+    }
+    device = deviceWithLink(device, links.first());
+    device.autoTarget = links.first().autoTarget;
+    device.extraLinks = links.mid(1);
+    m_homeAutoLeaveUntilMs = 0;
+    m_devicesGrid->addDevice(device);
+    postStatus(tr("Added \"%1\" to the project.").arg(device.name), 4000);
+    refreshHomePage();
 }
 
 void MainWindow::openStartupDashboard() {

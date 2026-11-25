@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QSet>
 #include <QString>
+#include <QVector>
 
 class QUdpSocket;
 class QTimer;
@@ -33,6 +34,37 @@ QByteArray buildQuery(const QString& hostname);
 // MdnsResolver treats all of those the same way (nothing usable here),
 // there's no need for the caller to distinguish them.
 QHash<QString, QHostAddress> parseAAnswers(const QByteArray& message);
+
+// Builds one mDNS query for the PTR records of a DNS-SD service type
+// (RFC 6763 section 4, e.g. "_btp._tcp.local") -- "who offers this
+// service?". Every responder offering it answers with its instance's PTR,
+// and (ESP-IDF's mdns component does) its SRV, TXT and A records alongside.
+QByteArray buildPtrQuery(const QString& serviceType);
+
+// One service instance found in a DNS-SD answer: the instance's own name
+// (lower-cased, like every name this file reads), its SRV target host and
+// port, the "name" key of its TXT record (case kept -- it is what a robot
+// calls itself), and the A record of the SRV host when the same message
+// carried it (null otherwise).
+struct ServiceRecord {
+    QString instance;
+    QString host;
+    quint16 port = 0;
+    QString txtName;
+    QHostAddress address;
+};
+
+// Every instance of `serviceType` that `message` describes, gathered from
+// all three record sections (answers, authority, additional): a PTR names
+// the instance, its SRV/TXT/A fill in the rest. An SRV for an instance of
+// the type counts even without the PTR (an unsolicited announcement may
+// carry only that). Instances whose SRV is missing are left out -- without
+// a port there is nothing to dial.
+QVector<ServiceRecord> parseServiceRecords(const QByteArray& message, const QString& serviceType);
+
+// Up, running, multicast-capable, not loopback, with an IPv4 address: the
+// interfaces a query goes out on.
+bool usableInterface(const QNetworkInterface& iface);
 
 }  // namespace mdns_detail
 

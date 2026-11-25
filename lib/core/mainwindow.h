@@ -55,8 +55,11 @@ class DevicePreviewFrame;
 class DevicesGrid;
 class DiagramScriptRuntime;
 class FrameLog;
+class HomePage;
 class LayersPanel;
 class LogViewer;
+class NearbyRobotsService;
+struct NearbyRobot;
 class NotificationHistoryWindow;
 class NotificationLog;
 class OtaTab;
@@ -671,6 +674,12 @@ private:
     // Runs openStartupDashboard() once, then drops m_startupOverlay; later
     // calls are no-ops (see the constructor's startup wiring).
     void finishStartup();
+    // Home tab (see m_homeTabIndex).
+    void buildHomePage();
+    void refreshHomePage();
+    void showHomeTab();
+    void showDashboardTab();
+    void addNearbyRobotToProject(const NearbyRobot& robot);
     // Copies the live workspaces/devices state into ProjectStore's sections
     // ahead of a save.
     void syncProjectSections();
@@ -1131,6 +1140,18 @@ private:
     QJsonObject m_globalAppearance;
     bool m_applyingAppearance = false;
     int m_dashboardTabIndex = -1;
+    // The Home tab (core/homepage.h): where the app starts -- the open
+    // project, recent projects and the robots around this computer. First
+    // in the ribbon; reachable in User mode (no tab bar) through
+    // m_homeButton on the Dashboard row.
+    int m_homeTabIndex = -1;
+    HomePage* m_homePage = nullptr;
+    NearbyRobotsService* m_nearbyRobots = nullptr;
+    QToolButton* m_homeButton = nullptr;
+    // Until this time (ms since epoch) a device coming up while the Home tab
+    // is current takes the user to the dashboard on its own -- the startup
+    // case, where the robot connects by itself a few seconds in. 0 = off.
+    qint64 m_homeAutoLeaveUntilMs = 0;
     // Read-only "device: dot" strip replacing the old single-connection port/
     // baud/connect bar -- per-device connection config now lives in the
     // Devices tab (DeviceConfigDialog) instead.
