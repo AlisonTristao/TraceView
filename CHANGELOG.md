@@ -7,14 +7,28 @@ release flow.
 
 ## [Unreleased]
 
+## [5.1.1] - 2026-11-25
+
 ### Added
 
-- A TCP device whose connection is refused is asked for its `/status`; when
-  TraceKit's recovery firmware answers, its card in Devices shows an amber dot
-  and "in recovery mode at <address>" instead of a plain offline state.
+- **Recovery on the device card**: a TCP device that refuses the connection
+  or times out is asked for its `/status`; when TraceKit's recovery firmware
+  answers, its card in Devices shows an amber dot and "in recovery mode at
+  <address>" instead of a plain offline state.
+- **Fallback IP**: a field under the TCP row of the device dialog holds the
+  address dialed when mDNS does not answer for the `.local` name. It fills
+  itself from the last successful lookup and can be edited by hand.
 
 ### Fixed
 
+- Leaving recovery took up to a minute to reconnect: every failed dial grew
+  the reconnect backoff, and a Connect did not reset it. While the device is
+  in recovery TraceView now only polls `/status` every 3 s, dials at once
+  when recovery ends, and an explicit Connect always resets the backoff.
+- Closing the notification page on the compact layout overflowed the stack
+  and crashed TraceView.
+- Home now refreshes when it comes on screen.
+- Subscriptions keeps the current workspace's look.
 - The canvas snap grid (1×/2×/4× precision) only showed with the padlock
   open; in Run mode the Dots/Grid canvas pattern was a separate fixed 24 px
   texture. Dots and Grid now draw the snap grid itself in both modes, so it
