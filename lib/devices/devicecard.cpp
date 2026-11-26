@@ -262,7 +262,11 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     // green live. Also the click target for connectToggleRequested() (see
     // mousePressEvent()).
     const DeviceLinkState linkState = deviceLinkState(m_device);
-    const QColor dotColor = (linkState == DeviceLinkState::Live)      ? palette.success
+    // In recovery: up but out of the app -- amber, not the plain-offline red.
+    const bool inRecovery =
+        linkState == DeviceLinkState::Offline && !m_device.recoveryAddress.isEmpty();
+    const QColor dotColor = inRecovery                                ? palette.warning
+                            : (linkState == DeviceLinkState::Live)    ? palette.success
                             : (linkState == DeviceLinkState::Offline ||
                                linkState == DeviceLinkState::KeyRejected) ? palette.danger
                                                                      : palette.warning;
@@ -357,7 +361,9 @@ void DeviceCard::paintEvent(QPaintEvent*) {
                    ? tr("v%1").arg(m_device.btpVersion)
                    : tr("v%1 \xC2\xB7 ID %2").arg(m_device.btpVersion, m_device.btpId));
     // Name the amber state in words, not just a dot colour (topico 35 D.2).
-    if (linkState == DeviceLinkState::KeyRejected) {
+    if (inRecovery) {
+        reportedLine = tr("in recovery mode at %1").arg(m_device.recoveryAddress);
+    } else if (linkState == DeviceLinkState::KeyRejected) {
         reportedLine = tr("wrong password: can't read the device");
     } else if (linkState == DeviceLinkState::TransportOnly) {
         reportedLine = tr("port open, waiting for BTP session");
@@ -375,7 +381,9 @@ void DeviceCard::paintEvent(QPaintEvent*) {
     }
     // Nothing live: what the last connection reported, dimmed and said so.
     const bool fromCache = m_device.reportedInfo.isEmpty() && !m_cachedInfo.isEmpty();
-    if (fromCache && linkState != DeviceLinkState::KeyRejected) {
+    // Not in recovery either: that line is the news, and the note would push
+    // it off the card.
+    if (fromCache && linkState != DeviceLinkState::KeyRejected && !inRecovery) {
         // Said even beside a session line: info that is not live must never
         // read as the device's current state.
         const QString saved = tr("saved from the last connection");

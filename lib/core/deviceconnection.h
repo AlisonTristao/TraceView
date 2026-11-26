@@ -176,7 +176,10 @@ public:
     // than forwarded unauthenticated, but this connection still comes up
     // and accepts the robot's unsealed traffic (a direct session is not a
     // hub child -- see setDirectEndpointKey()).
-    void connectToTcp(const QString& host, quint16 port, const QByteArray& endpointKey);
+    // `fallbackHost`: dialed when mDNS does not answer for a *.local host
+    // (Device::tcpFallbackHost).
+    void connectToTcp(const QString& host, quint16 port, const QByteArray& endpointKey,
+                      const QString& fallbackHost = QString());
     // The BLE counterpart of connectToTcp(): `address` is a platform BLE
     // address (Device::bleAddress -- a discovery hint, not identity; see
     // its own comment), and `endpointKey` is the SAME derived channel-B key
@@ -223,6 +226,11 @@ signals:
     void deviceIdentified(const QString& btpVersion, const QString& btpId);
     // Mirrors Backend::keyRejected.
     void keyRejected(bool rejected);
+    // Mirrors TcpTransport::recoveryChanged (TCP only): the address where
+    // TraceKit's recovery firmware answered, empty when not seen.
+    void recoveryChanged(const QString& address);
+    // Mirrors TcpTransport::hostResolved: the address mDNS gave for the host.
+    void tcpHostResolved(const QString& address);
     // Mirrors Backend::deviceInfoReported (the device's MANIFEST_DATA
     // source_info block, BTP's docs/commands.md section 3.12).
     void deviceInfoReported(const QVector<traceview::DeviceInfoRecord>& info);
@@ -261,6 +269,13 @@ private:
 #endif
     Backend* m_backend = nullptr;
     QTimer* m_retryTimer;
+    // TCP only: the device answered as TraceKit's recovery. No BTP dial is
+    // made meanwhile (its port is closed in recovery); m_recoveryPoll asks
+    // /status instead, and the moment recovery is gone the backoff is reset
+    // and the device dialed at once. See onRecoveryChanged().
+    bool m_inRecovery = false;
+    QTimer* m_recoveryPoll = nullptr;
+    void onRecoveryChanged(const QString& address);
     QString m_target;
     qint32 m_baudRate = 0;
     QString m_tcpHost;

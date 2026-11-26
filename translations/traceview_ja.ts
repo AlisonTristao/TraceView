@@ -934,14 +934,6 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <translation>デバッグ -- 合成チャートデータ</translation>
     </message>
     <message>
-        <source>Rename workspace</source>
-        <translation type="vanished">ワークスペースの名前を変更</translation>
-    </message>
-    <message>
-        <source>Delete workspace</source>
-        <translation type="vanished">ワークスペースを削除</translation>
-    </message>
-    <message>
         <location filename="../lib/devices/deviceconfigdialog.cpp" line="+66"/>
         <source>(unnamed topic)</source>
         <translation>(名前なしトピック)</translation>
@@ -950,10 +942,6 @@ AI アシスタントのアクセスをオフにするか TraceView を閉じる
         <location line="+19"/>
         <source>(unnamed)</source>
         <translation>(名前なし)</translation>
-    </message>
-    <message>
-        <source>Change icon</source>
-        <translation type="vanished">アイコンを変更</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
@@ -3037,7 +3025,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+302"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+306"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -3058,6 +3046,11 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
+        <source>in recovery mode at %1</source>
+        <translation>recovery モード (%1)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>wrong password: can&apos;t read the device</source>
         <translation>パスワードが違います: デバイスを読み取れません</translation>
     </message>
@@ -3110,7 +3103,7 @@ Allowed: %1</source>
         <translation>接続</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+82"/>
         <source>None</source>
         <translation>なし</translation>
     </message>
@@ -3181,12 +3174,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+271"/>
+        <location line="+272"/>
         <source>e.g. robot1.local</source>
         <translation>例: robot1.local</translation>
     </message>
     <message>
-        <location line="-261"/>
+        <location line="-262"/>
         <source>Use reported</source>
         <translation>報告値を使用</translation>
     </message>
@@ -3212,25 +3205,25 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+17"/>
-        <location line="+240"/>
+        <location line="+241"/>
         <source>Connected</source>
         <translation>接続済み</translation>
     </message>
     <message>
-        <location line="-240"/>
-        <location line="+240"/>
+        <location line="-241"/>
+        <location line="+241"/>
         <source>Disconnected</source>
         <translation>切断されました</translation>
     </message>
     <message>
-        <location line="-237"/>
+        <location line="-238"/>
         <location line="+3"/>
-        <location line="+153"/>
+        <location line="+154"/>
         <source>(not connected yet)</source>
         <translation>(未接続)</translation>
     </message>
     <message>
-        <location line="-143"/>
+        <location line="-144"/>
         <source>Status:</source>
         <translation>状態:</translation>
     </message>
@@ -3265,7 +3258,7 @@ Allowed: %1</source>
         <translation>上記の設定を適用し、このダイアログを閉じずに今すぐ（再）接続します。</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+115"/>
         <source>%1 (last connection)</source>
         <translation>%1（前回の接続）</translation>
     </message>
@@ -3291,7 +3284,7 @@ Allowed: %1</source>
         <translation>デバイスの報告: %1</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-240"/>
         <source>Reported by device</source>
         <translation>デバイスからの報告</translation>
     </message>
@@ -3299,7 +3292,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+200"/>
         <source>transport rejected %1 bytes</source>
         <translation>トランスポートが %1 バイトを拒否しました</translation>
     </message>
@@ -3558,10 +3551,6 @@ Allowed: %1</source>
         <location line="+5"/>
         <source>Pix key: %1</source>
         <translation>Pix キー: %1</translation>
-    </message>
-    <message>
-        <source>Pix key (phone): %1</source>
-        <translation type="vanished">Pixキー（電話番号）: %1</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -3864,10 +3853,6 @@ Allowed: %1</source>
         <location line="-60"/>
         <source>No recent projects yet.</source>
         <translation>最近のプロジェクトはまだありません。</translation>
-    </message>
-    <message>
-        <source>%1 (opens at startup)</source>
-        <translation type="vanished">%1（起動時に開く）</translation>
     </message>
     <message numerus="yes">
         <location line="+21"/>
@@ -4478,12 +4463,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4709"/>
+        <location line="+4723"/>
         <source>Later</source>
         <translation>後で</translation>
     </message>
     <message>
-        <location line="-4702"/>
+        <location line="-4716"/>
         <source>&amp;Access</source>
         <translation>アクセス(&amp;A)</translation>
     </message>
@@ -4497,10 +4482,6 @@ Drops: %2</source>
         <location line="+8"/>
         <source>&amp;Notifications</source>
         <translation>通知(&amp;N)</translation>
-    </message>
-    <message>
-        <source>&amp;Debug</source>
-        <translation type="vanished">デバッグ(&amp;D)</translation>
     </message>
     <message>
         <location line="+64"/>
@@ -4541,10 +4522,6 @@ Drops: %2</source>
         <location line="+2"/>
         <source>Dona&amp;te</source>
         <translation>寄付(&amp;K)</translation>
-    </message>
-    <message>
-        <source>Report a &amp;Bug</source>
-        <translation type="vanished">バグを報告(&amp;B)</translation>
     </message>
     <message>
         <location line="+64"/>
@@ -4633,18 +4610,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3900"/>
+        <location line="+3914"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location line="-3898"/>
-        <location line="+3898"/>
+        <location line="-3912"/>
+        <location line="+3912"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location line="-3855"/>
+        <location line="-3869"/>
         <source>Add Device</source>
         <translation>デバイスを追加</translation>
     </message>
@@ -4690,12 +4667,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3821"/>
+        <location line="+3835"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>ダッシュボードを全画面表示(F11)</translation>
     </message>
     <message>
-        <location line="-3732"/>
+        <location line="-3746"/>
         <location line="+520"/>
         <source>Home</source>
         <translation>ホーム</translation>
@@ -4816,7 +4793,7 @@ Drops: %2</source>
         <translation>通知</translation>
     </message>
     <message>
-        <location line="+143"/>
+        <location line="+149"/>
         <source>Close</source>
         <translation>閉じる</translation>
     </message>
@@ -4826,7 +4803,7 @@ Drops: %2</source>
         <translation>%1: %2 で見つかりました</translation>
     </message>
     <message>
-        <location line="+390"/>
+        <location line="+398"/>
         <source>%1: trying %2</source>
         <translation>%1: %2 を試行中</translation>
     </message>
@@ -5017,13 +4994,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>アプリを閉じる</translation>
     </message>
     <message>
-        <location line="-3921"/>
-        <location line="+3602"/>
+        <location line="-3935"/>
+        <location line="+3616"/>
         <source>Devices</source>
         <translation>デバイス</translation>
     </message>
     <message>
-        <location line="-3506"/>
+        <location line="-3520"/>
         <source>Subscriptions</source>
         <translation>購読</translation>
     </message>
@@ -5095,23 +5072,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3080"/>
+        <location line="+3094"/>
         <source>Add widget</source>
         <translation>ウィジェットを追加</translation>
     </message>
     <message>
-        <location line="-3077"/>
+        <location line="-3091"/>
         <source>Remove selected widget (%1)</source>
         <translation>選択したウィジェットを削除(%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3082"/>
+        <location line="+3096"/>
         <source>Add device</source>
         <translation>デバイスを追加</translation>
     </message>
     <message>
-        <location line="-3079"/>
+        <location line="-3093"/>
         <source>Remove selected device (%1)</source>
         <translation>選択したデバイスを削除(%1)</translation>
     </message>
@@ -5196,7 +5173,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>レイヤー/プロパティパネルを表示</translation>
     </message>
     <message>
-        <location line="+385"/>
+        <location line="+391"/>
         <source>New Device</source>
         <translation>新しいデバイス</translation>
     </message>
@@ -5272,12 +5249,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>モーション(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1684"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1690"/>
         <source>Dashboard</source>
         <translation>ダッシュボード</translation>
     </message>
     <message>
-        <location line="+2085"/>
+        <location line="+2099"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: この BLE アドレスは別のロボットとして応答しています (期待値 %2、実際 %3)</translation>
     </message>
@@ -6766,7 +6743,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>チェックあり: この方法でロボットに接続できます。</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+15"/>
+        <source>IP if the .local name isn&apos;t found</source>
+        <translation>.local 名が見つからない場合の IP</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Dialed when mDNS doesn&apos;t answer for the robot&apos;s .local name. Filled in from the last address it was found at; edit it to set one by hand.</source>
+        <translation>ロボットの .local 名に mDNS が応答しないときに使います。最後に見つかったアドレスが自動で入ります。手動で設定するには編集してください。</translation>
+    </message>
+    <message>
+        <location line="+89"/>
         <location line="+11"/>
         <source>Automatic (%1)</source>
         <translation>自動 (%1)</translation>
@@ -7688,12 +7675,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/core/tcptransport.cpp" line="+108"/>
+        <location filename="../lib/core/tcptransport.cpp" line="+161"/>
         <source>TCP connection timed out</source>
         <translation>TCP 接続がタイムアウトしました</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+63"/>
         <source>Could not find %1 on the network (mDNS)</source>
         <translation>ネットワーク上で %1 が見つかりませんでした (mDNS)</translation>
     </message>
@@ -8287,25 +8274,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
-    <name>traceview::WorkspaceDock</name>
-    <message>
-        <source>New Workspace…</source>
-        <translation type="vanished">新しいワークスペース…</translation>
-    </message>
-    <message>
-        <source>Rename…</source>
-        <translation type="vanished">名前を変更…</translation>
-    </message>
-    <message>
-        <source>Change Icon…</source>
-        <translation type="vanished">アイコンを変更…</translation>
-    </message>
-    <message>
-        <source>Delete Workspace</source>
-        <translation type="vanished">ワークスペースを削除</translation>
-    </message>
-</context>
-<context>
     <name>traceview::WorkspaceStrip</name>
     <message>
         <location filename="../lib/core/workspacestrip.cpp" line="+204"/>
@@ -8326,13 +8294,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+3"/>
         <source>Delete Workspace</source>
         <translation>ワークスペースを削除</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::WorkspaceSwitcher</name>
-    <message>
-        <source>New Workspace…</source>
-        <translation type="vanished">新しいワークスペース…</translation>
     </message>
 </context>
 </TS>

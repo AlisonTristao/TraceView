@@ -150,6 +150,19 @@ DeviceConnection::DeviceConnection(CommType commType, TransportType transportTyp
             // lambda a few lines below would then discard that transition
             // silently (connected but m_connectionPhase never advances).
             m_tcpTransport->setReconnectEnabled(false);
+            connect(m_tcpTransport, &TcpTransport::recoveryChanged, this,
+                    &DeviceConnection::onRecoveryChanged);
+            m_recoveryPoll = new QTimer(this);
+            m_recoveryPoll->setInterval(3000);
+            connect(m_recoveryPoll, &QTimer::timeout, this, [this]() {
+                if (!m_shouldBeConnected) {
+                    m_recoveryPoll->stop();  // disconnected on purpose: stop asking
+                    return;
+                }
+                m_tcpTransport->probeRecovery();
+            });
+            connect(m_tcpTransport, &TcpTransport::hostResolved, this,
+                    &DeviceConnection::tcpHostResolved);
             m_transport = m_tcpTransport;
             break;
         case TransportType::Ble:
@@ -352,10 +365,11 @@ void DeviceConnection::connectTo(const QString& target, qint32 baudRate) {
 }
 
 void DeviceConnection::connectToTcp(const QString& host, quint16 port,
-                                    const QByteArray& endpointKey) {
+                                    const QByteArray& endpointKey, const QString& fallbackHost) {
     if (m_tcpTransport == nullptr) {
         return;
     }
+    m_tcpTransport->setFallbackHost(fallbackHost);
 
     const QString trimmedHost = host.trimmed();
     const bool targetChanged = trimmedHost != m_tcpHost || port != m_tcpPort;
@@ -390,9 +404,10 @@ void DeviceConnection::connectToTcp(const QString& host, quint16 port,
         return;
     }
     m_attemptInProgress = false;
-    if (targetChanged || !wasWanted) {
-        resetReconnectBackoff();
-    }
+    // Always, not only on a new target: this path is an explicit Connect or
+    // an applied edit, and must dial now rather than wait out a backoff that
+    // earlier failures (a reboot, a stay in recovery) built up.
+    resetReconnectBackoff();
     if (!m_transportAvailable) {
         setConnectionPhase(ConnectionPhase::Disconnected);
         return;
@@ -681,6 +696,28 @@ int DeviceConnection::reconnectBackoffMs(int failedAttempts, int tickMs) {
     return int(qMin<qint64>(wait, kMaxReconnectBackoffMs));
 }
 
+void DeviceConnection::onRecoveryChanged(const QString& address) {
+    const bool inRecovery = !address.isEmpty();
+    if (inRecovery != m_inRecovery) {
+        m_inRecovery = inRecovery;
+        if (inRecovery) {
+            qCInfo(lcConnection) << "in recovery: polling" << address << "instead of dialing";
+            m_recoveryPoll->start();
+        } else {
+            m_recoveryPoll->stop();
+            if (m_shouldBeConnected && !m_transport->isConnected()) {
+                // Out of recovery, most likely rebooting into the app: dial
+                // now, not after the backoff the failed dials built up.
+                qCInfo(lcConnection) << "left recovery: dialing now";
+                resetReconnectBackoff();
+                m_attemptInProgress = false;
+                attemptReconnect();
+            }
+        }
+    }
+    emit recoveryChanged(address);
+}
+
 void DeviceConnection::resetReconnectBackoff() {
     m_attemptsSinceUp = 0;
     m_nextAttemptMs = 0;
@@ -720,6 +757,9 @@ void DeviceConnection::attemptReconnect() {
     }
     if (m_attemptInProgress) {
         return;
+    }
+    if (m_inRecovery) {
+        return;  // its BTP port is closed; m_recoveryPoll watches for it to leave
     }
     const qint64 now = m_backoffClock.elapsed();
     if (now < m_nextAttemptMs) {

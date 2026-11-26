@@ -934,14 +934,6 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <translation>Отладка -- синтетические данные графика</translation>
     </message>
     <message>
-        <source>Rename workspace</source>
-        <translation type="vanished">Переименовать рабочее пространство</translation>
-    </message>
-    <message>
-        <source>Delete workspace</source>
-        <translation type="vanished">Удалить рабочее пространство</translation>
-    </message>
-    <message>
         <location filename="../lib/devices/deviceconfigdialog.cpp" line="+66"/>
         <source>(unnamed topic)</source>
         <translation>(тема без имени)</translation>
@@ -950,10 +942,6 @@ Allow it to connect devices and send them commands until AI assistant access is 
         <location line="+19"/>
         <source>(unnamed)</source>
         <translation>(без имени)</translation>
-    </message>
-    <message>
-        <source>Change icon</source>
-        <translation type="vanished">Изменить значок</translation>
     </message>
     <message>
         <location filename="../lib/dashboard/widgets/textboardwidget.cpp" line="+231"/>
@@ -3039,7 +3027,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceCard</name>
     <message>
-        <location filename="../lib/devices/devicecard.cpp" line="+302"/>
+        <location filename="../lib/devices/devicecard.cpp" line="+306"/>
         <source>%1 dBm</source>
         <translation>%1 dBm</translation>
     </message>
@@ -3060,6 +3048,11 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
+        <source>in recovery mode at %1</source>
+        <translation>в режиме recovery по адресу %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>wrong password: can&apos;t read the device</source>
         <translation>неверный пароль: не удаётся прочитать устройство</translation>
     </message>
@@ -3112,7 +3105,7 @@ Allowed: %1</source>
         <translation>Подключение</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+82"/>
         <source>None</source>
         <translation>Нет</translation>
     </message>
@@ -3183,12 +3176,12 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+271"/>
+        <location line="+272"/>
         <source>e.g. robot1.local</source>
         <translation>напр. robot1.local</translation>
     </message>
     <message>
-        <location line="-261"/>
+        <location line="-262"/>
         <source>Use reported</source>
         <translation>Взять сообщённый</translation>
     </message>
@@ -3214,25 +3207,25 @@ Allowed: %1</source>
     </message>
     <message>
         <location line="+17"/>
-        <location line="+240"/>
+        <location line="+241"/>
         <source>Connected</source>
         <translation>Подключено</translation>
     </message>
     <message>
-        <location line="-240"/>
-        <location line="+240"/>
+        <location line="-241"/>
+        <location line="+241"/>
         <source>Disconnected</source>
         <translation>Отключено</translation>
     </message>
     <message>
-        <location line="-237"/>
+        <location line="-238"/>
         <location line="+3"/>
-        <location line="+153"/>
+        <location line="+154"/>
         <source>(not connected yet)</source>
         <translation>(ещё не подключено)</translation>
     </message>
     <message>
-        <location line="-143"/>
+        <location line="-144"/>
         <source>Status:</source>
         <translation>Состояние:</translation>
     </message>
@@ -3267,7 +3260,7 @@ Allowed: %1</source>
         <translation>Применить настройки выше и (пере)подключиться сейчас, не закрывая это окно.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="+115"/>
         <source>%1 (last connection)</source>
         <translation>%1 (последнее подключение)</translation>
     </message>
@@ -3293,7 +3286,7 @@ Allowed: %1</source>
         <translation>устройство сообщает: %1</translation>
     </message>
     <message>
-        <location line="-239"/>
+        <location line="-240"/>
         <source>Reported by device</source>
         <translation>Сообщено устройством</translation>
     </message>
@@ -3301,7 +3294,7 @@ Allowed: %1</source>
 <context>
     <name>traceview::DeviceConnection</name>
     <message>
-        <location filename="../lib/core/deviceconnection.cpp" line="+196"/>
+        <location filename="../lib/core/deviceconnection.cpp" line="+200"/>
         <source>transport rejected %1 bytes</source>
         <translation>транспорт отклонил %1 байт</translation>
     </message>
@@ -3560,10 +3553,6 @@ Allowed: %1</source>
         <location line="+5"/>
         <source>Pix key: %1</source>
         <translation>Ключ Pix: %1</translation>
-    </message>
-    <message>
-        <source>Pix key (phone): %1</source>
-        <translation type="vanished">Ключ Pix (телефон): %1</translation>
     </message>
     <message>
         <location line="+9"/>
@@ -3872,10 +3861,6 @@ Allowed: %1</source>
         <location line="-60"/>
         <source>No recent projects yet.</source>
         <translation>Недавних проектов пока нет.</translation>
-    </message>
-    <message>
-        <source>%1 (opens at startup)</source>
-        <translation type="vanished">%1 (открывается при запуске)</translation>
     </message>
     <message numerus="yes">
         <location line="+21"/>
@@ -4492,12 +4477,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+4709"/>
+        <location line="+4723"/>
         <source>Later</source>
         <translation>Позже</translation>
     </message>
     <message>
-        <location line="-4702"/>
+        <location line="-4716"/>
         <source>&amp;Access</source>
         <translation>Доступ (&amp;A)</translation>
     </message>
@@ -4511,10 +4496,6 @@ Drops: %2</source>
         <location line="+8"/>
         <source>&amp;Notifications</source>
         <translation>Уведомления (&amp;N)</translation>
-    </message>
-    <message>
-        <source>&amp;Debug</source>
-        <translation type="vanished">Отладка (&amp;D)</translation>
     </message>
     <message>
         <location line="+64"/>
@@ -4555,10 +4536,6 @@ Drops: %2</source>
         <location line="+2"/>
         <source>Dona&amp;te</source>
         <translation>Поддержать (&amp;P)</translation>
-    </message>
-    <message>
-        <source>Report a &amp;Bug</source>
-        <translation type="vanished">Сообщить об &amp;ошибке</translation>
     </message>
     <message>
         <location line="+64"/>
@@ -4647,18 +4624,18 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+3900"/>
+        <location line="+3914"/>
         <source>Undo</source>
         <translation>Отменить</translation>
     </message>
     <message>
-        <location line="-3898"/>
-        <location line="+3898"/>
+        <location line="-3912"/>
+        <location line="+3912"/>
         <source>Redo</source>
         <translation>Повторить</translation>
     </message>
     <message>
-        <location line="-3855"/>
+        <location line="-3869"/>
         <source>Add Device</source>
         <translation>Добавить устройство</translation>
     </message>
@@ -4704,12 +4681,12 @@ Drops: %2</source>
     </message>
     <message>
         <location line="+36"/>
-        <location line="+3821"/>
+        <location line="+3835"/>
         <source>Fullscreen dashboard (F11)</source>
         <translation>Панель в полноэкранном режиме (F11)</translation>
     </message>
     <message>
-        <location line="-3732"/>
+        <location line="-3746"/>
         <location line="+520"/>
         <source>Home</source>
         <translation>Главная</translation>
@@ -4830,7 +4807,7 @@ Drops: %2</source>
         <translation>Уведомления</translation>
     </message>
     <message>
-        <location line="+143"/>
+        <location line="+149"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -4840,7 +4817,7 @@ Drops: %2</source>
         <translation>%1: найден на %2</translation>
     </message>
     <message>
-        <location line="+390"/>
+        <location line="+398"/>
         <source>%1: trying %2</source>
         <translation>%1: пробую %2</translation>
     </message>
@@ -5031,13 +5008,13 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Закрыть приложение</translation>
     </message>
     <message>
-        <location line="-3921"/>
-        <location line="+3602"/>
+        <location line="-3935"/>
+        <location line="+3616"/>
         <source>Devices</source>
         <translation>Устройства</translation>
     </message>
     <message>
-        <location line="-3506"/>
+        <location line="-3520"/>
         <source>Subscriptions</source>
         <translation>Подписки</translation>
     </message>
@@ -5109,23 +5086,23 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
     <message>
         <location line="+81"/>
-        <location line="+3080"/>
+        <location line="+3094"/>
         <source>Add widget</source>
         <translation>Добавить виджет</translation>
     </message>
     <message>
-        <location line="-3077"/>
+        <location line="-3091"/>
         <source>Remove selected widget (%1)</source>
         <translation>Удалить выбранный виджет (%1)</translation>
     </message>
     <message>
         <location line="+8"/>
-        <location line="+3082"/>
+        <location line="+3096"/>
         <source>Add device</source>
         <translation>Добавить устройство</translation>
     </message>
     <message>
-        <location line="-3079"/>
+        <location line="-3093"/>
         <source>Remove selected device (%1)</source>
         <translation>Удалить выбранное устройство (%1)</translation>
     </message>
@@ -5210,7 +5187,7 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Показать панели Слои/Свойства</translation>
     </message>
     <message>
-        <location line="+385"/>
+        <location line="+391"/>
         <source>New Device</source>
         <translation>Новое устройство</translation>
     </message>
@@ -5286,12 +5263,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>&amp;Движение</translation>
     </message>
     <message>
-        <location filename="../lib/core/mainwindow.cpp" line="-1684"/>
+        <location filename="../lib/core/mainwindow.cpp" line="-1690"/>
         <source>Dashboard</source>
         <translation>Dashboard</translation>
     </message>
     <message>
-        <location line="+2085"/>
+        <location line="+2099"/>
         <source>%1: this BLE address now answers as a different robot (expected %2, got %3)</source>
         <translation>%1: этот BLE-адрес теперь отвечает как другой робот (ожидался %2, получен %3)</translation>
     </message>
@@ -6786,7 +6763,17 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <translation>Отмечено: до робота можно добраться этим способом.</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+15"/>
+        <source>IP if the .local name isn&apos;t found</source>
+        <translation>IP, если имя .local не найдено</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Dialed when mDNS doesn&apos;t answer for the robot&apos;s .local name. Filled in from the last address it was found at; edit it to set one by hand.</source>
+        <translation>Используется, когда mDNS не отвечает на имя .local робота. Заполняется последним адресом, где он был найден; измените, чтобы задать вручную.</translation>
+    </message>
+    <message>
+        <location line="+89"/>
         <location line="+11"/>
         <source>Automatic (%1)</source>
         <translation>Автоматически (%1)</translation>
@@ -7710,12 +7697,12 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
 <context>
     <name>traceview::TcpTransport</name>
     <message>
-        <location filename="../lib/core/tcptransport.cpp" line="+108"/>
+        <location filename="../lib/core/tcptransport.cpp" line="+161"/>
         <source>TCP connection timed out</source>
         <translation>Истекло время подключения TCP</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+63"/>
         <source>Could not find %1 on the network (mDNS)</source>
         <translation>Не удалось найти %1 в сети (mDNS)</translation>
     </message>
@@ -8311,25 +8298,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
     </message>
 </context>
 <context>
-    <name>traceview::WorkspaceDock</name>
-    <message>
-        <source>New Workspace…</source>
-        <translation type="vanished">Новое рабочее пространство…</translation>
-    </message>
-    <message>
-        <source>Rename…</source>
-        <translation type="vanished">Переименовать…</translation>
-    </message>
-    <message>
-        <source>Change Icon…</source>
-        <translation type="vanished">Изменить значок…</translation>
-    </message>
-    <message>
-        <source>Delete Workspace</source>
-        <translation type="vanished">Удалить рабочее пространство</translation>
-    </message>
-</context>
-<context>
     <name>traceview::WorkspaceStrip</name>
     <message>
         <location filename="../lib/core/workspacestrip.cpp" line="+204"/>
@@ -8350,13 +8318,6 @@ Choose Later to keep working -- the changes will apply the next time you open Tr
         <location line="+3"/>
         <source>Delete Workspace</source>
         <translation>Удалить рабочее пространство</translation>
-    </message>
-</context>
-<context>
-    <name>traceview::WorkspaceSwitcher</name>
-    <message>
-        <source>New Workspace…</source>
-        <translation type="vanished">Новое рабочее пространство…</translation>
     </message>
 </context>
 </TS>

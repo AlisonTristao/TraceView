@@ -1,7 +1,13 @@
 #include "tcptransport.h"
 
 #include <QAbstractSocket>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QTcpSocket>
+#include <QUrl>
 
 #include "core/applog.h"
 #include "ota/mdnsresolver.h"
@@ -73,6 +79,7 @@ void TcpTransport::onConnected() {
     m_connectTimer.stop();
     m_retryTimer.stop();
     m_retryDelayMs = m_initialRetryDelayMs;
+    setRecoveryAddress(QString());
     emit connectionStateChanged(true);
 }
 
@@ -98,13 +105,67 @@ void TcpTransport::onDisconnected() {
 void TcpTransport::onSocketError() {
     const QString message = m_socket->errorString();
     qCWarning(lcConnection) << "TCP error on" << m_host << m_port << ":" << message;
+    if (m_socket->error() == QAbstractSocket::ConnectionRefusedError) {
+        probeRecovery();
+    }
     emit errorOccurred(message);
+}
+
+void TcpTransport::probeRecovery() {
+    if (m_probeInFlight || m_lastAddress.isEmpty()) {
+        return;
+    }
+    if (m_probe == nullptr) {
+        m_probe = new QNetworkAccessManager(this);
+    }
+    QUrl url;
+    url.setScheme(QStringLiteral("http"));
+    url.setHost(m_lastAddress);
+    url.setPath(QStringLiteral("/status"));
+    QNetworkRequest request(url);
+    request.setTransferTimeout(2000);
+    m_probeInFlight = true;
+    QNetworkReply* reply = m_probe->get(request);
+    // setTransferTimeout() does not cover the connect phase: a probe sent
+    // while the device was still rebooting hung for over a minute and, being
+    // the one in flight, blocked every later probe. Abort it ourselves.
+    QTimer::singleShot(2000, reply, [reply]() {
+        if (reply->isRunning()) reply->abort();
+    });
+    const QString address = m_lastAddress;
+    connect(reply, &QNetworkReply::finished, this, [this, reply, address]() {
+        reply->deleteLater();
+        m_probeInFlight = false;
+        if (m_closing || isConnected()) {
+            return;
+        }
+        const bool answered = reply->error() == QNetworkReply::NoError;
+        const QJsonObject status =
+            answered ? QJsonDocument::fromJson(reply->readAll()).object() : QJsonObject();
+        const bool inRecovery = answered &&
+                                status.value(QStringLiteral("mode")).toString() ==
+                                    QLatin1String("recovery");
+        if (inRecovery) {
+            qCWarning(lcConnection) << m_host << "is in TraceKit recovery at" << address;
+        }
+        setRecoveryAddress(inRecovery ? address : QString());
+    });
+}
+
+void TcpTransport::setRecoveryAddress(const QString& address) {
+    if (m_recoveryAddress == address) {
+        return;
+    }
+    m_recoveryAddress = address;
+    emit recoveryChanged(address);
 }
 
 void TcpTransport::onConnectTimeout() {
     if (m_socket->state() == QAbstractSocket::ConnectingState) {
         qCWarning(lcConnection) << "TCP connection timed out for" << m_host << m_port;
         m_socket->abort();
+        // Recovery may drop the SYN instead of refusing it: ask here too.
+        probeRecovery();
         emit errorOccurred(tr("TCP connection timed out"));
     }
 }
@@ -131,6 +192,7 @@ void TcpTransport::dial() {
     // A new attempt supersedes any lookup still in flight for an older one.
     const QString requestId = QString::number(++m_dialSequence);
     if (!MdnsResolver::isMdnsHostname(m_host)) {
+        m_lastAddress = m_host;
         m_socket->connectToHost(m_host, m_port);
         return;
     }
@@ -148,6 +210,9 @@ void TcpTransport::onMdnsResolved(const QString& requestId, const QHostAddress& 
         return;
     }
     qCInfo(lcConnection) << m_host << "resolved to" << address.toString();
+    m_lastAddress = address.toString();
+    m_learnedHost = m_lastAddress;  // for when mDNS goes quiet later
+    emit hostResolved(m_lastAddress);
     m_socket->connectToHost(address, m_port);
 }
 
@@ -156,6 +221,15 @@ void TcpTransport::onMdnsResolveFailed(const QString& requestId) {
         return;
     }
     qCWarning(lcConnection) << "mDNS lookup failed for" << m_host;
+    const QString fallback = effectiveFallbackHost();
+    if (!fallback.isEmpty() && m_socket->state() == QAbstractSocket::UnconnectedState) {
+        // The address it last answered with (or the one set by hand): a
+        // refusal or timeout there still gets the recovery probe.
+        qCInfo(lcConnection) << "trying the fallback address" << fallback;
+        m_lastAddress = fallback;
+        m_socket->connectToHost(fallback, m_port);
+        return;
+    }
     emit errorOccurred(tr("Could not find %1 on the network (mDNS)").arg(m_host));
     scheduleReconnect();
 }

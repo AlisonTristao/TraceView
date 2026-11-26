@@ -113,6 +113,25 @@ void DevicesGrid::setDeviceKeyRejected(const QString& id, bool rejected) {
     emit deviceLiveStateChanged(m_devices[idx]);
 }
 
+void DevicesGrid::setDeviceRecovery(const QString& id, const QString& address) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0 || m_devices[idx].recoveryAddress == address) {
+        return;
+    }
+    m_devices[idx].recoveryAddress = address;
+    refreshCard(idx);
+    emit deviceLiveStateChanged(m_devices[idx]);
+}
+
+void DevicesGrid::setDeviceTcpFallbackHost(const QString& id, const QString& address) {
+    const int idx = indexOfDevice(id);
+    if (idx < 0 || address.isEmpty() || m_devices[idx].tcpFallbackHost == address) {
+        return;
+    }
+    m_devices[idx].tcpFallbackHost = address;
+    emit deviceLiveStateChanged(m_devices[idx]);
+}
+
 void DevicesGrid::setDeviceIdentity(const QString& id, const QString& btpVersion,
                                     const QString& btpId) {
     const int idx = indexOfDevice(id);

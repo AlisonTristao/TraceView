@@ -328,6 +328,9 @@ QJsonObject deviceToJson(const Device& device) {
     object["usbPath"] = device.usbPath;
     object["tcpHost"] = device.tcpHost;
     object["tcpPort"] = device.tcpPort;
+    if (!device.tcpFallbackHost.isEmpty()) {
+        object["tcpFallbackHost"] = device.tcpFallbackHost;
+    }
     object["bleAddress"] = device.bleAddress;
     object["blePeerUuid"] = device.blePeerUuid;
     // Only when set, like extraLinks below: a device configured by hand saves
@@ -389,6 +392,7 @@ Device deviceFromJson(const QJsonObject& object, bool* ok) {
     device.usbPath = object.value("usbPath").toString();
     device.tcpHost = object.value("tcpHost").toString();
     device.tcpPort = tcpPortFromJson(object.value("tcpPort"));
+    device.tcpFallbackHost = object.value("tcpFallbackHost").toString();
     device.bleAddress = object.value("bleAddress").toString();
     device.blePeerUuid = object.value("blePeerUuid").toString();
     device.robotName = object.value("robotName").toString();

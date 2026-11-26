@@ -135,6 +135,7 @@ DeviceConfigDialog::DeviceConfigDialog(const Device& initial, QWidget* parent)
     // defaulting to Automatic (found by that name). See RobotLinksPanel.
     m_linksPanel = new RobotLinksPanel(
         m_device.robotName.isEmpty() ? m_device.name : m_device.robotName, links, connectionGroup);
+    m_linksPanel->setTcpFallbackHost(m_device.tcpFallbackHost);
     connectionLayout->addWidget(m_linksPanel);
     connect(m_linksPanel, &RobotLinksPanel::refreshPortsRequested, this,
             &DeviceConfigDialog::refreshPortsRequested);
@@ -392,6 +393,7 @@ Device DeviceConfigDialog::result() const {
     device.cachePeerPassword = m_cachePasswordCheck->isChecked();
     device.peerPassword = m_peerPasswordEdit->text();
     device.otaAddress = m_otaAddressEdit->text().trimmed();
+    device.tcpFallbackHost = m_linksPanel->tcpFallbackHost();
     // btpVersion/btpId deliberately left as whatever m_device already held --
     // "Reported by device" is read-only (see the fields' own declarations).
     return device;
