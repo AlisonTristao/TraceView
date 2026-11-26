@@ -269,6 +269,13 @@ private:
 #endif
     Backend* m_backend = nullptr;
     QTimer* m_retryTimer;
+    // TCP only: the device answered as TraceKit's recovery. No BTP dial is
+    // made meanwhile (its port is closed in recovery); m_recoveryPoll asks
+    // /status instead, and the moment recovery is gone the backoff is reset
+    // and the device dialed at once. See onRecoveryChanged().
+    bool m_inRecovery = false;
+    QTimer* m_recoveryPoll = nullptr;
+    void onRecoveryChanged(const QString& address);
     QString m_target;
     qint32 m_baudRate = 0;
     QString m_tcpHost;

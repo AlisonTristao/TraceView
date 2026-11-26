@@ -64,6 +64,10 @@ public:
     }
     // Numeric address dialed when the *.local host is not answered by mDNS
     // (Device::tcpFallbackHost). Empty = none.
+    // Asks GET http://<last address>/status once (see recoveryChanged()).
+    // Called on a refused/timed-out dial, and by DeviceConnection every few
+    // seconds while the device sits in recovery, to notice it leave.
+    void probeRecovery();
     void setFallbackHost(const QString& host) {
         m_fallbackHost = host.trimmed();
     }
@@ -101,7 +105,6 @@ private:
     void dial();
     void drainPendingFrames();
     void scheduleReconnect();
-    void probeRecovery();
     void setRecoveryAddress(const QString& address);
 
     static constexpr int kMaxPendingFrames = 16;
